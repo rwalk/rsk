@@ -1,0 +1,2 @@
+#Repeated Suvery Kalman Filter (RSK)
+This is an implementation of the Kalman filter of Jo Thori Lind found in the papers [http://folk.uio.no/jlind/papers/DP333.pdf](here) and [http://folk.uio.no/jlind/papers/surveys.pdf](here).
