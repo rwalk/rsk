@@ -12,9 +12,7 @@ def generate_random_y(n_periods,
                       transition_matrix,
                       translation_matrix,
                       a0,
-                      sigma,
-                      Q,
-                      Q0=None
+                      sigma
                       ):
     '''
      The y is n_individuals x n_vars x n_periods array
@@ -29,60 +27,43 @@ def generate_random_y(n_periods,
     :param translation_matrix:
     :param a0:
     :param sigma:
-    :param Q:
-    :param Q0:
     :return:
     '''
 
     chol_sigma = cholesky(sigma).transpose()
-    try:
-        chol_Q = cholesky(Q).transpose()
-    except np.linalg.linalg.LinAlgError:
-        chol_Q = 0
 
-    if Q0 is not None:
-        chol_Q0 = cholesky(Q0).transpose()
-    else:
-        chol_Q0 = 0
+    # preallocate y
+    y = np.zeros((n_periods,  n_individuals, n_vars))
 
-    y = None
-
-    alpha = randn_matrix(n_alpha, 1).dot(chol_Q0) + a0
+    alpha = randn_matrix(n_alpha, 1) + a0
     for t in range(n_periods):
-        alpha = transition_matrix.dot(alpha) + randn_matrix(n_alpha, 1).dot(chol_Q)
-        y_col = sp.array((sp.ones((n_individuals, 1)).dot(translation_matrix.dot(alpha))).transpose() + randn_matrix(n_vars, n_individuals).dot(chol_sigma), ndmin=3)
-        if y is None:
-            y = sp.array(y_col, ndmin=3)
-        else:
-            y = sp.vstack((y, y_col))
+        alpha = transition_matrix.dot(alpha) + randn_matrix(n_alpha, 1)
+        y[t] = sp.ones((n_individuals, 1)).dot(translation_matrix.dot(alpha)) + (randn_matrix(n_vars, n_individuals).dot(chol_sigma)).transpose()
     return y
 
 
-def random_walk_example(n_periods):
+def random_walk_example(n_periods, n_individuals):
     # right now, we just generate the data according to a random walk.
-    a0,Q0, Q = map(lambda x: sp.matrix([x]),[0,1,1])
-    n_individuals = 10
+    a0,Q0,Q = map(lambda x: sp.matrix([x]),[0,1,1])
     sigma = sp.eye(n_individuals)
     n_vars=1
     n_alpha = 1
     transition_matrix = sp.matrix([1])
     translation_matrix = sp.matrix([1])
-    y = generate_random_y(n_periods, n_vars, n_individuals, n_alpha, transition_matrix, translation_matrix, a0, sigma, Q, Q0)
+    y = generate_random_y(n_periods, n_vars, n_individuals, n_alpha, transition_matrix, translation_matrix, a0, sigma)
     return y
 
-def arama22_example(n_periods):
+def arama22_example(n_periods, n_individuals):
     # right now, we just generate the data according the ARMA(2,2)
     n_alpha = 6
-    n_vars = 5
-    n_individuals = 3
+    n_vars = 1
 
     a0 = sp.zeros((n_alpha,1))
-    Q0 = sp.eye(n_alpha)
     sigma = sp.eye(n_individuals)
 
     # Q here is a rank 1 matrix
-    q = sp.matrix([1,0,0,0,0,0]).transpose()
-    Q = q.dot(q.transpose())
+    #q = sp.matrix([1,0,0,0,0,0]).transpose()
+    #Q = q.dot(q.transpose())
 
     # column normalized transition matrix
     transition_matrix = sp.matrix([
@@ -95,11 +76,8 @@ def arama22_example(n_periods):
     ])
 
     translation_matrix = sp.matrix([0,1,0,0,0,0])
-    return generate_random_y(n_periods, n_vars, n_individuals, n_alpha, transition_matrix, translation_matrix, a0, sigma, Q)
-
-
-
+    return generate_random_y(n_periods, n_vars, n_individuals, n_alpha, transition_matrix, translation_matrix, a0, sigma)
 
 if __name__ == "__main__":
-    #print(random_walk_example(5).shape)
-    print(arama22_example(7))
+    print(random_walk_example(5, 10))
+    print(arama22_example(2,5).shape)
