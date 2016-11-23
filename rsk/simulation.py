@@ -46,21 +46,23 @@ def generate_random_y(n_periods,
         chol_Q0 = 0
 
     y = None
+
     alpha = randn_matrix(n_alpha, 1).dot(chol_Q0) + a0
     for t in range(n_periods):
         alpha = transition_matrix.dot(alpha) + randn_matrix(n_alpha, 1).dot(chol_Q)
-        y_col = (sp.ones((n_individuals, 1)).dot(translation_matrix.dot(alpha))).transpose() + randn_matrix(n_vars, n_individuals).dot(chol_sigma)
+        y_col = sp.array((sp.ones((n_individuals, 1)).dot(translation_matrix.dot(alpha))).transpose() + randn_matrix(n_vars, n_individuals).dot(chol_sigma), ndmin=3)
         if y is None:
-            y = y_col
+            y = sp.array(y_col, ndmin=3)
         else:
-            y = sp.hstack((y, y_col))
+            y = sp.vstack((y, y_col))
     return y
 
 
 def random_walk_example(n_periods):
     # right now, we just generate the data according to a random walk.
-    a0,Q0,sigma,Q = map(lambda x: sp.matrix([x]),[0,1,1,1])
-    n_individuals = 1
+    a0,Q0, Q = map(lambda x: sp.matrix([x]),[0,1,1])
+    n_individuals = 10
+    sigma = sp.eye(n_individuals)
     n_vars=1
     n_alpha = 1
     transition_matrix = sp.matrix([1])
@@ -71,12 +73,12 @@ def random_walk_example(n_periods):
 def arama22_example(n_periods):
     # right now, we just generate the data according the ARMA(2,2)
     n_alpha = 6
-    n_vars = 1
-    n_individuals = 1
+    n_vars = 5
+    n_individuals = 3
 
     a0 = sp.zeros((n_alpha,1))
     Q0 = sp.eye(n_alpha)
-    sigma = sp.matrix([1])
+    sigma = sp.eye(n_individuals)
 
     # Q here is a rank 1 matrix
     q = sp.matrix([1,0,0,0,0,0]).transpose()
@@ -93,11 +95,11 @@ def arama22_example(n_periods):
     ])
 
     translation_matrix = sp.matrix([0,1,0,0,0,0])
-    return generate_random_y(n_periods, n_vars, n_individuals, n_alpha, transition_matrix, translation_matrix, a0, sigma, Q, None)
+    return generate_random_y(n_periods, n_vars, n_individuals, n_alpha, transition_matrix, translation_matrix, a0, sigma, Q)
 
 
 
 
 if __name__ == "__main__":
-    print(random_walk_example(5).shape)
-    print(arama22_example(5).shape)
+    #print(random_walk_example(5).shape)
+    print(arama22_example(7))
