@@ -10,3 +10,9 @@ This is an implementation of the Kalman filter of Jo Thori Lind found in the pap
 |n|n_alpha|Length of the α vector|
 |F|transition_matrix|Markov transition matrix|
 |Z|translation_matrix|Translates α into group means μ|
+
+## Tests
+To run tests, from the root of the project run:
+```
+python -m unittest
+```

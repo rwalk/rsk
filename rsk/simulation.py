@@ -1,7 +1,7 @@
 import scipy as sp
 from scipy.linalg import cholesky
 from scipy import transpose as t, ones
-from rsk import rsk_filter
+from rsk import RSK
 
 
 def randn_matrix(n, m):
@@ -43,17 +43,6 @@ def generate_random_y(n_periods,
         y[i] = translation_matrix.dot(alpha) + randn_matrix(n_individuals, n_vars)
     return y
 
-def aggregate_raw_data(y):
-    '''
-    Compute means and covariances of the raw data y
-    :param y: array(n_periods x n_individuals x n_vars)
-    :return:
-    '''
-    m = sp.mean(y, axis=0)
-    c = sp.var(y, axis=0)
-    return m,c
-
-
 def random_walk_example(n_periods, n_individuals):
     # right now, we just generate the data according to a random walk.
     a0,Q0,Q = map(lambda x: sp.matrix([x]),[0,1,1])
@@ -63,19 +52,10 @@ def random_walk_example(n_periods, n_individuals):
     transition_matrix = sp.matrix([1])
     translation_matrix = sp.matrix([1])
     y = generate_random_y(n_periods, n_vars, n_individuals, n_alpha, transition_matrix, translation_matrix, a0, sigma)
-    ymeans, ycov = aggregate_raw_data(y)
-    result = rsk_filter(ymeans,
-               translation_matrix,
-               translation_matrix,
-               sp.eye(1),
-               sigma,
-               a0,
-               Q0,
-               Q,
-               1 # n groups
-               )
 
-    return result
+    rsk_filter = RSK(transition_matrix, translation_matrix)
+    rsk_filter.fit(y, sigma, a0, Q0, Q)
+    print(rsk_filter.alpha)
 
 def arama22_example(n_periods, n_individuals):
     # right now, we just generate the data according the ARMA(2,2)
@@ -103,5 +83,5 @@ def arama22_example(n_periods, n_individuals):
     return generate_random_y(n_periods, n_vars, n_individuals, n_alpha, transition_matrix, translation_matrix, a0, sigma)
 
 if __name__ == "__main__":
-    print(random_walk_example(10, 15))
+    random_walk_example(100, 1000, )
     #print(arama22_example(2,5).shape)
