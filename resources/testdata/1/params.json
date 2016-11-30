@@ -1,0 +1,9 @@
+{
+  "a0": [0],
+  "Q0": [0],
+  "sigma": [1],
+  "Q": [1],
+  "transition_matrix": [1],
+  "translation_matrix": [1],
+  "n_periods":10
+}
