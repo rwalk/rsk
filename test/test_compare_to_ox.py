@@ -2,6 +2,7 @@ from unittest import TestCase
 from util.oxcsv import parse_ox_csv
 from rsk.rsk import RSK
 import scipy as sp
+import numpy as np
 import os.path
 import json
 
@@ -15,30 +16,23 @@ class TestCompareToOx(TestCase):
         '''
         with open(os.path.join(self.datapath, "1/params.json")) as f:
             params = json.loads(f.read())
-        yy = sp.array(parse_ox_csv(os.path.join(self.datapath, "1/raw_data.csv"))).transpose()
+        yy = sp.array(parse_ox_csv(os.path.join(self.datapath, "1/raw_data.csv")), dtype=np.float64).transpose()
         y = sp.reshape(yy, (101, 10, 1))[1:]
-        alpha = sp.matrix(parse_ox_csv(os.path.join(self.datapath, "1/alpha.csv"))).transpose()[1:]
-        ox_means = sp.array(parse_ox_csv(os.path.join(self.datapath, "1/means.csv"))).transpose()
-        ox_cov = sp.array(parse_ox_csv(os.path.join(self.datapath, "1/cov.csv"))).transpose()
+        alpha = sp.matrix(parse_ox_csv(os.path.join(self.datapath, "1/alpha.csv")),dtype=np.float64)
+        ox_means = sp.array(parse_ox_csv(os.path.join(self.datapath, "1/means.csv")), dtype=np.float64).transpose()[1:]
+        ox_cov = sp.array(parse_ox_csv(os.path.join(self.datapath, "1/cov.csv")), dtype=np.float64).transpose()
         py_means,py_cov = RSK.aggregate_raw_data(y)
-        print(py_means.shape)
-        print(py_cov.shape)
-        print("MEAN: " + str(ox_means.shape))
-        print("COV: " + str(ox_cov.shape))
 
-        print("PY MEANS: " + str(py_means[0:10]))
-        print("OX MEANS: " + str(ox_means[0:10]))
+        # check means
+        assert sp.allclose(ox_means, py_means), "Python means do not match OX means"
 
-
-
-        print("Y shape: %d x %d x %d" % y.shape)
-        print("alpha shape: %d x %d" % alpha.shape)
+        # check covs
+        assert sp.allclose(ox_cov[1:], py_cov), "Python covariance does not match OX covariance."
 
         rsk_filter = RSK(sp.matrix(params["transition_matrix"]), sp.matrix(params["translation_matrix"]))
         rsk_filter.fit(y, sp.matrix(params["sigma"]), sp.matrix(params["a0"]), sp.matrix(params["Q0"]), sp.matrix(params["Q"]))
 
-        for a1,a2 in zip(alpha, rsk_filter.alpha):
-            print(a1,a2)
-        assert sp.allclose(alpha, rsk_filter.alpha)
+        # check alphas
+        assert sp.allclose(alpha.tolist()[1:], rsk_filter.alpha.tolist()[1:])
 
 
