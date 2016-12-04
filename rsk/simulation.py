@@ -3,7 +3,6 @@ from scipy.linalg import cholesky
 from scipy import transpose as t, ones
 from rsk import RSK
 
-
 def randn_matrix(n, m):
     return sp.matrix(sp.randn(n, m))
 

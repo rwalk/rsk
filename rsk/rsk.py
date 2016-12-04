@@ -31,9 +31,10 @@ class RSK:
         n_sigma_inv = sp.kron(n_groups, inv(sigma)) #TODO: for now, non-dynamic
 
         # alpha hidden layer setup
+        a0 = a0.reshape(-1,1)
         n_alpha = len(a0)
-        alpha = sp.zeros((n_periods+1,  n_alpha))
-        alpha_filter = sp.zeros((n_periods+1, n_alpha))
+        alpha = sp.zeros((n_periods+1,  n_alpha, 1))
+        alpha_filter = sp.zeros((n_periods+1, n_alpha, 1))
         alpha_filter[0] = a0
 
         # V covariance setup
@@ -56,6 +57,3 @@ class RSK:
         self.alpha_filter = alpha_filter
         self.V=V
         self.V_filter = V_filter
-
-
-
