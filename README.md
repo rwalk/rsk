@@ -2,6 +2,15 @@
 This project implements the repeated surveys Kalman filter of Jo Thori Lind found in the papers [here](http://folk.uio.no/jlind/papers/DP333.pdf) and [here](http://folk.uio.no/jlind/papers/surveys.pdf).  
 It is based on the author's original source written for the Ox language.
 
+## Setup
+Installation requires numpy and scipy.  Clone the repo and then run the setup script
+```
+git clone https://github.com/rwalk/rsk
+cd rsk
+python setup.py install
+```
+Once the project has stabilized, we'll probably put it up on pypi to make it pip installable.
+
 ## Tests
 We have a few tests that check the results of our python implementation against the original Ox implementation.
 To run these tests, from the root of the project execute:
