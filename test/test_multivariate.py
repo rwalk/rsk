@@ -67,9 +67,7 @@ class TestMultivariate(TestCase):
 
         alpha = sp.matrix(parse_ox_csv(os.path.join(self.datapath, "3/alpha.csv")),dtype=np.float64)[:,1:]
         ox_means = sp.array(parse_ox_csv(os.path.join(self.datapath, "3/means.csv")), dtype=np.float64).transpose()[1:]
-        print(ox_means.shape)
         ox_cov = sp.array(parse_ox_csv(os.path.join(self.datapath, "3/cov.csv")), dtype=np.float64).transpose()
-        print(y.shape)
         py_means,py_cov = RSK.aggregate_raw_data(y)
 
         # check means
