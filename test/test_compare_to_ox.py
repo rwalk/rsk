@@ -7,6 +7,7 @@ import os.path
 import json
 
 class TestCompareToOx(TestCase):
+    '''This class compares our implementation against the Ox reference implementation'''
     datapath = os.path.join(os.path.dirname(os.path.abspath(__file__)), "../resources/testdata/")
 
     def test1(self):
@@ -22,6 +23,7 @@ class TestCompareToOx(TestCase):
         ox_means = sp.array(parse_ox_csv(os.path.join(self.datapath, "1/means.csv")), dtype=np.float64).transpose()[1:]
         ox_cov = sp.array(parse_ox_csv(os.path.join(self.datapath, "1/cov.csv")), dtype=np.float64).transpose()
         py_means,py_cov = RSK.aggregate_raw_data(y)
+
 
         # check means
         assert sp.allclose(ox_means, py_means), "Python means do not match OX means"
