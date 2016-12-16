@@ -81,5 +81,5 @@ class TestMultivariate(TestCase):
         rsk_filter.fit(y, sp.matrix(params["sigma"]), sp.matrix(params["a0"]), sp.matrix(params["Q0"]), sp.matrix(params["Q"]))
 
         a1 = alpha.transpose()
-        a2 = np.squeeze(rsk_filter.alpha[1:])
+        a2 = np.squeeze(rsk_filter.alpha)
         assert sp.allclose(a1, a2), "Alpha does not match OX alpha"
