@@ -2,6 +2,13 @@
 This project implements the repeated surveys Kalman filter of Jo Thori Lind found in the papers [here](http://folk.uio.no/jlind/papers/DP333.pdf) and [here](http://folk.uio.no/jlind/papers/surveys.pdf).  
 It is based on the author's original source written for the Ox language.
 
+## Overview
+Suppose we observe a population of individuals at several points in time.  At each point in time, we can measure the mean of a variable of interest in the population.  But if the true mean of the population is changing smoothly and gradually over time, we might imagine that the measurement of a mean at any particular point in time might be improved by considering data from the other observed time slices.  This is the idea behind the Kalman filter--exploit the temporal dynamics to smooth out fluctuations in point-in-time estimates.
+
+![img](examples/example.png)
+
+See [examples](examples/) for further illustration and applications of the Kalman filter.
+
 ## Setup
 Installation requires numpy and scipy.  Clone the repo and then run the setup script
 ```
