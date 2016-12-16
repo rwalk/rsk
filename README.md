@@ -11,7 +11,7 @@ See [examples](examples/) for further illustration and applications of the Kalma
 
 ## Setup
 Installation requires numpy and scipy.  Clone the repo and then run the setup script
-```
+```bash
 git clone https://github.com/rwalk/rsk
 cd rsk
 python setup.py install
@@ -22,14 +22,14 @@ Once the project has stabilized, we'll probably put it up on pypi to make it pip
 We have a few tests that check the results of our python implementation against the original Ox implementation.
 To run these tests, from the root of the project execute:
 
-```
+```bash
 python -m unittest
 ```
 
 ## Usage guide
 
 The RSK filter is implemented in the RSK class. Initialize the class with the transition and translation matrices:
-```
+```python
 from rsk import RSK
 rsk = RSK(transition_matrix, translation_matrix)
 ```
@@ -37,7 +37,7 @@ The transmission matrix is an `n_alpha` by `n_alpha` array modelling the transit
 The translation matrix is an `n_vars` by `n_alpha` array mapping the latent vector `alpha` back into fitted sample means.
 
 To apply the repeated surveys Kalman filter, call `fit` on an RSK instance:
-```
+```python
 fitted_means = rsk.fit(y, sigma, a0, Q0, Q)
 ```
 The 3D array `y` is the data collected from a repeated survey.  Its shape is:
