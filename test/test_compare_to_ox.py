@@ -35,7 +35,7 @@ class TestCompareToOx(TestCase):
         rsk_filter.fit(y, sp.matrix(params["sigma"]), sp.matrix(params["a0"]), sp.matrix(params["Q0"]), sp.matrix(params["Q"]))
 
         # check alphas
-        assert sp.allclose(alpha.tolist()[1:], rsk_filter.alpha.tolist()[1:])
+        assert sp.allclose(alpha.tolist()[1:], rsk_filter.alpha.tolist())
 
 
     def test2(self):
@@ -62,5 +62,5 @@ class TestCompareToOx(TestCase):
         rsk_filter.fit(y, sp.matrix(params["sigma"]), sp.matrix(params["a0"]), sp.matrix(params["Q0"]), sp.matrix(params["Q"]))
 
         # check alphas
-        assert sp.allclose(alpha.transpose()[1:].tolist(), rsk_filter.alpha[1:].reshape(-1,6).tolist())
+        assert sp.allclose(alpha.transpose()[1:].tolist(), rsk_filter.alpha.reshape(-1,6).tolist())
 
