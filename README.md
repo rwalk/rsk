@@ -26,7 +26,7 @@ The RSK filter is implemented in the RSK class. Initialize the class with the tr
 from rsk import RSK
 rsk = RSK(transition_matrix, translation_matrix)
 ```
-The transmission matrix is an `n_alpha` by `n_alpha` array modelling the transition dynamics of the latent alpha vector.
+The transition matrix is an `n_alpha` by `n_alpha` array modelling the transition dynamics of the latent alpha vector.
 The translation matrix is an `n_vars` by `n_alpha` array mapping the latent vector `alpha` back into fitted sample means.
 
 To apply the repeated surveys Kalman filter, call `fit` on an RSK instance:
