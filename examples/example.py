@@ -9,6 +9,7 @@ from scipy.stats import gaussian_kde
 # need to load parent module to run this script
 sys.path.append("..")
 from rsk.rsk import RSK
+from rsk.panel import PanelSeries
 
 def jitter(arr):
     err = .002*(max(arr)-min(arr))
@@ -22,7 +23,7 @@ def trial():
     F = matrix([[0.99, 0.01], [0.01,0.99]])
     a0 = np.matrix([1,0]).transpose()
 
-    sigma_value = 0.05  # variance of y
+    sigma_value = 0.01  # variance of y
     Q = sigma_value*sp.eye(2)  # covariance matrix for alpha
 
     # generate alpha according to equation 5
@@ -41,10 +42,16 @@ def trial():
     y = np.random.multivariate_normal(mu, sigma_value*sp.eye(10), size=(1,200)).transpose()
     raw_means = y.mean(axis=1)
 
+    rows = []
+    for i,group in enumerate(y):
+        for entry in group:
+            rows.append([i, "A"] + entry.tolist())
+    panel_series = PanelSeries.from_list(rows)
+
     # fit means with RSK
     rsk = RSK(F,Z)
-    fitted_means = rsk.fit(y, sigma_value*sp.eye(1), a0, Q, Q)
-    smoothed_fitted_means = rsk.fit(y, sigma_value*sp.eye(1), a0, Q, Q, smooth=True)
+    fitted_means = rsk.fit(panel_series, a0, Q, Q, sigma=sigma_value*sp.eye(1))
+    smoothed_fitted_means = rsk.fit(panel_series, a0, Q, Q, smooth=True, sigma=sigma_value*sp.eye(1))
     return true_means, raw_means.flatten(), fitted_means.flatten(), smoothed_fitted_means.flatten(), y
 
 def example():

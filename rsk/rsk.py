@@ -15,19 +15,6 @@ class RSK:
         self.translation_matrix = translation_matrix
         self.transition_matrix = transition_matrix
 
-    @staticmethod
-    def aggregate_raw_data(y):
-        '''
-        Compute means and covariances of the raw data y across individuals at each point in time measurement.
-        :param y: array(n_periods x n_individuals x n_vars)
-        :return: array(n_periods, n_vars), array(n_periods, n_vars)
-        '''
-        #TODO: Accomadate non-trivial group structure
-        m = sp.mean(y, axis=1).reshape(-1,y.shape[-1])        # coerce to a matrix, else we get shape errors.
-        c = sp.var(y, axis=1).reshape(-1,y.shape[-1])
-        return m,c
-
-
     def smooth(self, alpha, alpha_filter, V, V_filter):
         '''
         Backwards recursive smoother
