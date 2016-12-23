@@ -1,6 +1,5 @@
 import csv
 import scipy as sp
-import numpy as np
 
 class PanelSeries:
 
@@ -24,7 +23,7 @@ class PanelSeries:
         #
         # compute group masks and check variables
         #
-        group_count_mask = {}
+        group_counts_mask = {}
         _, n_vars = panels[0].data[0].data.shape
         self.n_variables = n_vars
         for panel in panels:
@@ -32,8 +31,8 @@ class PanelSeries:
             var_counts = [group.data.shape[1] for group in panel.data]
             if not all([v==n_vars for v in var_counts]):
                 raise ValueError("Must have same number of variables for each individual!")
-            group_count_mask[panel.time] = sp.diag(group_sizes)
-        self.group_count_mask = group_count_mask
+            group_counts_mask[panel.time] = sp.diag(group_sizes)
+        self.group_counts_mask = group_counts_mask
 
     def means(self):
         '''
@@ -170,4 +169,4 @@ class Panel:
         :return: covariance matrix (n_vars x n_vars)
         '''
         M = sp.vstack([group.data for group in self.data])
-        return sp.cov(M, rowvar=False, ddof=1)
+        return sp.matrix(sp.cov(M, rowvar=False, ddof=1))

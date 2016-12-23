@@ -52,8 +52,8 @@ class TestPanels(TestCase):
 
         panel1 = Panel(0, [group_1a, group_1b])
         panel_series = PanelSeries([panel1, panel2], variable_names=["year","district", "ewok_count", "rebel_count"])
-        assert sp.allclose(panel_series.group_count_mask[0], sp.diag([3,3]))
-        assert sp.allclose(panel_series.group_count_mask[1], sp.diag([3,3]))
+        assert sp.allclose(panel_series.group_counts_mask[0], sp.diag([3,3]))
+        assert sp.allclose(panel_series.group_counts_mask[1], sp.diag([3,3]))
 
         covs = panel_series.cov()
         means = panel_series.means()
