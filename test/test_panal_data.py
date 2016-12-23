@@ -59,3 +59,47 @@ class TestPanels(TestCase):
         means = panel_series.means()
         assert sp.allclose(means[0], sp.matrix([[ 2.33333333, 1.66666667], [2.66666667,  4.0 ]]))
         assert sp.allclose(covs[0], sp.matrix([[11.5,-12.9], [-12.9, 185.7667]]))
+
+    def test_panel_builders(self):
+        data = [
+            ["0", "Eastern Territory of Endor", 2, 1],
+            ["0", "Eastern Territory of Endor", 0, 23],
+            ["0", "Eastern Territory of Endor", 5, -19],
+            ["0", "Western Territory of Endor", 1, 1],
+            ["0", "Western Territory of Endor", -1, 2],
+            ["0", "Western Territory of Endor", 8,9],
+            ["1", "Eastern Territory of Endor", 1,0],
+            ["1", "Eastern Territory of Endor", 0, 22],
+            ["1", "Eastern Territory of Endor", 4, -17],
+            ["1", "Western Territory of Endor", 2,0],
+            ["1", "Western Territory of Endor", 0,0],
+            ["1", "Western Territory of Endor", 7,10]
+        ]
+
+        # test list builder
+        panel_series = PanelSeries.from_list(data, ["time", "region", "ewoks", "rebels"])
+        panel_series.cov()
+        covs = panel_series.cov()
+        means = panel_series.means()
+        assert sp.allclose(means[0], sp.matrix([[ 2.33333333, 1.66666667], [2.66666667,  4.0 ]]))
+        assert sp.allclose(covs[0], sp.matrix([[11.5,-12.9], [-12.9, 185.7667]]))
+
+        # test csv builder
+        import csv
+        with open("/tmp/panel-test.csv", "w") as f:
+            writer = csv.writer(f)
+            writer.writerow(["time", "region", "ewoks", "rebels"])
+            writer.writerows(data)
+
+        panel_series = PanelSeries.from_csv("/tmp/panel-test.csv", 0,1)
+        panel_series.cov()
+        covs = panel_series.cov()
+        means = panel_series.means()
+        assert sp.allclose(means[0], sp.matrix([[ 2.33333333, 1.66666667], [2.66666667,  4.0 ]]))
+        assert sp.allclose(covs[0], sp.matrix([[11.5,-12.9], [-12.9, 185.7667]]))
+
+
+
+
+
+

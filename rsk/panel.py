@@ -65,11 +65,11 @@ class PanelSeries:
         with open(filename) as f:
             reader = csv.reader(f)
             if header:
-                colnames = next(header)
+                colnames = next(reader)
                 colnames = [colnames[time_index] + colnames[group_index]] + [entry for i,entry in enumerate(colnames) if i not in skip_index]
             for row in reader:
                 #put the time and group indices at start of row, followed by data
-                rowlist.append([row[time_index], row[group_index]] + [entry for i,entry in enumerate(row) if i not in skip_index])
+                rowlist.append([row[time_index], row[group_index]] + [float(entry) for i,entry in enumerate(row) if i not in skip_index])
         return PanelSeries.from_list(rowlist, colnames)
 
     @staticmethod
@@ -103,7 +103,7 @@ class PanelSeries:
 
         # process each panel and order by time index
         panels = []
-        for t,panel in sorted(panel_dict.items, key=lambda x:x[0]):
+        for t,panel in sorted(panel_dict.items(), key=lambda x:x[0]):
             groups = []
             for g,data in sorted(panel.items(), key=lambda x:x[0]):
                 groups.append(Group(g, data))
