@@ -53,7 +53,7 @@ class TestMultivariate(TestCase):
         fitted_means = rsk_filter.fit(panel_series, a0, Q0, Q, sigma=sigma )
 
         # check that all means are equal
-        for row in fitted_means.tolist():
+        for row in fitted_means:
             assert np.allclose(row[0:2], row[2:4]), "Measurements differ unexpectedly."
 
 

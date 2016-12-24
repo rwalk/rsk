@@ -93,8 +93,8 @@ class RSK:
         self.V=V
         self.V_filter = V_filter
 
-        fitted_means = sp.zeros((n_periods, n_vars))
+        fitted_means = []
         for i in range(n_periods):
-            fitted_means[i] = sp.squeeze(self.translation_matrix.dot(alpha[i]))
-
+            n_groups = panel_series.group_counts_mask[i].shape[0]
+            fitted_means.append(self.translation_matrix.dot(alpha[i]).reshape(n_groups, n_vars))
         return fitted_means

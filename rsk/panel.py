@@ -1,6 +1,13 @@
 import csv
 import scipy as sp
 
+def is_numeric(entry):
+    try:
+        float(entry)
+        return True
+    except ValueError:
+        return False
+
 class PanelSeries:
 
     def __init__(self, panels, variable_names=None):
@@ -23,7 +30,7 @@ class PanelSeries:
         #
         # compute group masks and check variables
         #
-        group_counts_mask = {}
+        group_counts_mask = []
         _, n_vars = panels[0].data[0].data.shape
         self.n_variables = n_vars
         for panel in panels:
@@ -31,7 +38,7 @@ class PanelSeries:
             var_counts = [group.data.shape[1] for group in panel.data]
             if not all([v==n_vars for v in var_counts]):
                 raise ValueError("Must have same number of variables for each individual!")
-            group_counts_mask[panel.time] = sp.diag(group_sizes)
+            group_counts_mask.append(sp.diag(group_sizes))
         self.group_counts_mask = group_counts_mask
 
     def means(self):
@@ -49,7 +56,7 @@ class PanelSeries:
         return [panel.cov() for t,panel in self.data]
 
     @staticmethod
-    def from_csv(filename, time_index, group_index, header=True):
+    def from_csv(filename, time_index, group_index, header=True, drop_missing=True):
         '''
         Load a data set from a csv file.
         :param filename:
@@ -65,8 +72,12 @@ class PanelSeries:
             reader = csv.reader(f)
             if header:
                 colnames = next(reader)
-                colnames = [colnames[time_index] + colnames[group_index]] + [entry for i,entry in enumerate(colnames) if i not in skip_index]
+                colnames = [colnames[time_index], colnames[group_index]] + [entry for i,entry in enumerate(colnames) if i not in skip_index]
+
             for row in reader:
+                if drop_missing and not all([is_numeric(entry) for i,entry in enumerate(row) if i not in skip_index]):
+                    continue
+
                 #put the time and group indices at start of row, followed by data
                 rowlist.append([row[time_index], row[group_index]] + [float(entry) for i,entry in enumerate(row) if i not in skip_index])
         return PanelSeries.from_list(rowlist, colnames)
