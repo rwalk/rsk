@@ -73,8 +73,8 @@ class RSK:
 
             # compute group structure/covariance product
             if sigma is None:
-                sigma = inv(y_cov[i-1])
-            ng_sigma_inv = sp.kron(panel_series.group_counts_mask[i-1], sigma )
+                sigma = y_cov[i-1]
+            ng_sigma_inv = sp.kron(panel_series.group_counts_mask[i-1], inv(sigma) )
 
             # predict
             alpha[i] = transition_matrix.dot(alpha_filter[i-1, :])
