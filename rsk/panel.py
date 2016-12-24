@@ -17,13 +17,19 @@ class PanelSeries:
         :param panels:
         :param variable_names: names for the variables in the series.  The first two names are the names of time and group vars.
         '''
+
+        # if the time index is numeric, need to convert to float so that data will be properly sorted
+        if all([is_numeric(panel.time) for panel in panels]):
+            for panel in panels:
+                panel.time = float(panel.time)
+
         self.data = sorted([(panel.time, panel) for panel in panels], key=lambda x: x[0])
-        self.times = [panel.time for panel in panels]
+        self.times = [time for time,panel in self.data]
         self.variable_names = variable_names
 
         # verify that we have balanced individuals
         groups = [group.name for group in panels[0].data]
-        if not all([groups==[group.name for group in panel.data] for panel in panels]):
+        if not all([groups == [group.name for group in panel.data] for panel in panels]):
             raise ValueError("Currently, all panels must have the same members in the same order.")
         self.groups = groups
 
