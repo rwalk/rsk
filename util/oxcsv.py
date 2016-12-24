@@ -21,7 +21,6 @@ def parse_ox_csv(filename):
             result.append(result_row)
     return result
 
-
 if __name__ == "__main__":
 
     t1 = parse_ox_csv("../resources/testdata/1/raw_data.csv")

@@ -26,23 +26,48 @@ To run these tests, from the root of the project execute:
 python -m unittest
 ```
 
+## Working with panel data
+Because panel data can be quite tricky to manage, we've implemented the `PanelSeries` interface to streamline computation
+with the RSK filter.  The simplest way to use `PanelSeries` is to load data directly from CSV file on disk:
+
+```python
+from rsk.panel import PanelSeries
+time_index, group_index = 0,1
+panel_series = PanelSeries.from_csv("jedi.csv", time_index, group_index, header=True)
+```
+The time and group indices specify the index of the column in the csv for the time and group identifier
+variables. In this case `jedi.csv` should look like this:
+```
+time,region,ewoks,rebels
+0,Eastern Territory of Endor,2,1
+0,Eastern Territory of Endor,0,23
+0,Eastern Territory of Endor,5,-19
+0,Western Territory of Endor,1,1
+0,Western Territory of Endor,-1,2
+0,Western Territory of Endor,8,9
+1,Eastern Territory of Endor,1,0
+1,Eastern Territory of Endor,0,22
+1,Eastern Territory of Endor,4,-17
+1,Western Territory of Endor,2,0
+1,Western Territory of Endor,0,0
+1,Western Territory of Endor,7,10
+```
+All variables except for the group and time identifiers must be numeric.  
+
+
 ## Usage guide
 
 The RSK filter is implemented in the RSK class. Initialize the class with the transition and translation matrices:
 ```python
 from rsk import RSK
-rsk = RSK(transition_matrix, translation_matrix)
+rsk_filter = RSK(transition_matrix, translation_matrix)
 ```
 The transition matrix is an `n_alpha` by `n_alpha` array modelling the transition dynamics of the latent alpha vector.
 The translation matrix is an `n_vars` by `n_alpha` array mapping the latent vector `alpha` back into fitted sample means.
 
-To apply the repeated surveys Kalman filter, call `fit` on an RSK instance:
+To apply the repeated surveys Kalman filter, call the `fit` method on an RSK instance, passing in a PanelSeries object:
 ```python
-fitted_means = rsk.fit(y, sigma, a0, Q0, Q)
-```
-The 3D array `y` is the data collected from a repeated survey.  Its shape is:
-```
-n_periods x n_individuals x n_vars
+fitted_means = rsk_filter.fit(panel_series, a0, Q0, Q)
 ```
 
 Fitted means is an `n_periods` by `n_vars` matrix containing the means estimated by the RSK algorithm. After `fit` has been applied, the `rsk.alpha` vector and other fitted parameters become available as attributes of the RSK
