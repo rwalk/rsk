@@ -83,7 +83,7 @@ class RSK:
             alpha_filter[i] = alpha[i] + V_filter[i].dot(t(translation_matrix)).dot(ng_sigma_inv).dot(y_means[i - 1].reshape(-1,1) - translation_matrix.dot(alpha[i]))
 
         if smooth:
-            alpha, V = self.smooth(alpha, alpha_filter, V, V_filter)
+            alpha_filer, V_filter = self.smooth(alpha, alpha_filter, V, V_filter)
 
         # remove the dummy NULL entry at start of arrays
         alpha, alpha_filter, V, V_filter = alpha[1:], alpha_filter[1:], V[1:], V_filter[1:]
@@ -96,5 +96,5 @@ class RSK:
         fitted_means = []
         for i in range(n_periods):
             n_groups = panel_series.group_counts_mask[i].shape[0]
-            fitted_means.append(self.translation_matrix.dot(alpha[i]).reshape(n_groups, n_vars))
+            fitted_means.append(self.translation_matrix.dot(alpha_filter[i]).reshape(n_groups, n_vars))
         return fitted_means

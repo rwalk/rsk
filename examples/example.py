@@ -52,7 +52,7 @@ def trial():
     rsk = RSK(F,Z)
     fitted_means = rsk.fit(panel_series, a0, Q, Q, sigma=sigma_value*sp.eye(1))
     smoothed_fitted_means = rsk.fit(panel_series, a0, Q, Q, smooth=True, sigma=sigma_value*sp.eye(1))
-    return true_means, raw_means.flatten(), fitted_means.flatten(), smoothed_fitted_means.flatten(), y
+    return true_means, raw_means, fitted_means, smoothed_fitted_means, y
 
 def example():
     '''
@@ -64,7 +64,7 @@ def example():
     # plot figure
     #
     fig = plt.figure()
-    t=[i+1 for i in range(10)]
+    t = [i+1 for i in range(10)]
     plt.scatter(np.repeat(sp.matrix(t), 200, axis=1).A1, y.reshape((-1,)), linewidths=0.01, s=12, c="r", label="data")
     plt.scatter(jitter(t), true_means, linewidths=0.25, s=72, c="yellow",label="true mean")
     plt.scatter(jitter(t), fitted_means, linewidths=0.25, s=72, c="blue", label="rsk mean")
@@ -76,15 +76,21 @@ def example():
     plt.ylabel("value")
     plt.show()
 
+def compute_error(X,Y):
+    s = 0
+    for x,y in zip(X,Y):
+        s+=(x-y)**2
+    return sp.sqrt(s)
+
 def simulated_error(N):
     raw_errors = []
     rsk_errors = []
     smth_errors = []
     for i in range(N):
         true_means, raw_means, fitted_means, smoothed_fitted_means, _ = trial()
-        raw_errors.append(np.sqrt(np.sum(np.square(true_means-raw_means))))
-        rsk_errors.append(np.sqrt(np.sum(np.square(true_means-fitted_means))))
-        smth_errors.append(np.sqrt(np.sum(np.square(true_means-smoothed_fitted_means))))
+        raw_errors.append(compute_error(true_means, raw_means))
+        rsk_errors.append(compute_error(true_means, fitted_means))
+        smth_errors.append(compute_error(true_means,smoothed_fitted_means))
     print("Simulation results with %d trials:" % N)
     print("\tAvg. Naive Means Error: %.4f" % np.mean(raw_errors))
     print("\tAvg. RSK Error: %.4f" % np.mean(rsk_errors))
@@ -92,8 +98,9 @@ def simulated_error(N):
 
     # plot continuous density
     fig = plt.figure()
-    density_raw = gaussian_kde(raw_errors)
-    density_rsk = gaussian_kde(rsk_errors)
+    density_raw = gaussian_kde(sp.vstack(raw_errors).flatten().tolist())
+    density_rsk = gaussian_kde(sp.vstack(rsk_errors).flatten().tolist())
+
     xs = np.linspace(0,3,200)
     plt.plot(xs, density_raw(xs), color="blue", lw=3, label="Naive means error")
     plt.plot(xs, density_rsk(xs), color="red", lw=3, label="RSK means error")
