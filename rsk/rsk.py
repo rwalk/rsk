@@ -38,7 +38,7 @@ class RSK:
 
         return alpha_smooth, V_smooth
 
-    def fit(self, panel_series, a0, Q0, Q, smooth=False, sigma=None):
+    def fit(self, panel_series, a0, Q0, Q, smooth=True, sigma=None):
         '''
         Fit the RSK model to survey data
         :param panel_series: A PanelSeries object containing the survey data
@@ -83,18 +83,29 @@ class RSK:
             alpha_filter[i] = alpha[i] + V_filter[i].dot(t(translation_matrix)).dot(ng_sigma_inv).dot(y_means[i - 1].reshape(-1,1) - translation_matrix.dot(alpha[i]))
 
         if smooth:
-            alpha_filer, V_filter = self.smooth(alpha, alpha_filter, V, V_filter)
+            alpha_smooth, V_smooth = self.smooth(alpha, alpha_filter, V, V_filter)
 
-        # remove the dummy NULL entry at start of arrays
+            # remove dummy entries
+            alpha_smooth, V_smooth = alpha_smooth[1:], V_smooth[1:]
+        else:
+            alpha_smooth, V_smooth = None, None
+
+        # remove the dummy NULL entry at start of all arrays
         alpha, alpha_filter, V, V_filter = alpha[1:], alpha_filter[1:], V[1:], V_filter[1:]
 
         self.alpha = alpha
         self.alpha_filter = alpha_filter
-        self.V=V
-        self.V_filter = V_filter
+        self.alpha_smooth = alpha_smooth
+        self.V_smooth = V_smooth
+
+        # use smoothed values to make predictions?
+        if smooth:
+            alpha_pred = alpha_smooth
+        else:
+            alpha_pred = alpha_filter
 
         fitted_means = []
         for i in range(n_periods):
             n_groups = panel_series.group_counts_mask[i].shape[0]
-            fitted_means.append(self.translation_matrix.dot(alpha_filter[i]).reshape(n_groups, n_vars))
+            fitted_means.append(self.translation_matrix.dot(alpha_pred[i]).reshape(n_groups, n_vars))
         return fitted_means

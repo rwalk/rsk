@@ -81,3 +81,39 @@ class TestCompareToOx(TestCase):
         # check alphas
         assert sp.allclose(alpha.transpose()[1:].tolist(), rsk_filter.alpha.reshape(-1,6).tolist())
 
+    def test4(self):
+        '''Test smoothing implementation'''
+        with open(os.path.join(self.datapath, "4/params.json")) as f:
+            params = json.loads(f.read())
+        yy = sp.array(parse_ox_csv(os.path.join(self.datapath, "4/raw_data.csv")), dtype=np.float64).transpose()
+        y = sp.reshape(yy, (101, 10, 1))[1:]
+
+        # read the ox data
+        ox_alpha = sp.matrix(parse_ox_csv(os.path.join(self.datapath, "4/alpha.csv")),dtype=np.float64)
+        ox_alpha_smooth = sp.matrix(parse_ox_csv(os.path.join(self.datapath, "4/alpha_smooth.csv")),dtype=np.float64)
+        ox_alpha_filter = sp.matrix(parse_ox_csv(os.path.join(self.datapath, "4/alpha_filter.csv")),dtype=np.float64)
+
+        rows = []
+        for i,group in enumerate(y):
+            for entry in group:
+                rows.append([i, "A"] + entry.tolist())
+        panel_series = PanelSeries.from_list(rows)
+
+        rsk_filter = RSK(sp.matrix(params["transition_matrix"]), sp.matrix(params["translation_matrix"]))
+        rsk_filter.fit(panel_series, sp.matrix(params["a0"]), sp.matrix(params["Q0"]), sp.matrix(params["Q"]), sigma=sp.eye(1), smooth=True)
+
+        # check alphas
+        assert sp.allclose(ox_alpha.transpose()[1:].tolist(),  rsk_filter.alpha.reshape(-1,1).tolist())
+
+        # verify smooth is not same as non-smooth
+        assert not sp.allclose( rsk_filter.alpha_smooth.reshape(-1,1).tolist(), rsk_filter.alpha.reshape(1,-1).tolist()[0])
+        assert not sp.allclose( rsk_filter.alpha_smooth.reshape(-1,1).tolist(), rsk_filter.alpha_filter.reshape(1,-1).tolist()[0])
+
+        # verify ox alpha matches alpha
+        assert sp.allclose( ox_alpha[0].transpose()[1:].flatten().tolist()[0], rsk_filter.alpha.reshape(1,-1).tolist()[0])
+
+        # verify ox alpha_smooth matches alpha_smooth
+        assert sp.allclose(ox_alpha_smooth[0].transpose()[1:].flatten().tolist()[0], rsk_filter.alpha_smooth.reshape(1,-1).tolist())
+
+        # check alpha filters
+        assert sp.allclose(ox_alpha_filter[0].transpose()[1:].flatten().tolist()[0], rsk_filter.alpha_filter.reshape(1,-1).tolist()[0])
