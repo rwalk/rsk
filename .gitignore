@@ -108,3 +108,7 @@ target/
 
 # Created by .ignore support plugin (hsz.mobi)
 private/
+
+
+# IPYNB
+.ipynb_checkpoints
