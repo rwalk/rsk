@@ -85,9 +85,9 @@ class TestMultivariate(TestCase):
 
         # check alphas
         rsk_filter = RSK(sp.matrix(params["transition_matrix"]), sp.matrix(params["translation_matrix"]))
-        rsk_filter.fit(panel_series, sp.matrix(params["a0"]), sp.matrix(params["Q0"]),
+        rsk_alpha, alpha_filter, alpha_smooth, V, V_filter, V_smooth = rsk_filter._fit(panel_series, sp.matrix(params["a0"]), sp.matrix(params["Q0"]),
                        sp.matrix(params["Q"]), sigma=sp.matrix(params["sigma"]))
 
         a1 = alpha.transpose()
-        a2 = np.squeeze(rsk_filter.alpha)
+        a2 = np.squeeze(rsk_alpha)
         assert sp.allclose(a1, a2), "Alpha does not match OX alpha"

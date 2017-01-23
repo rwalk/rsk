@@ -47,6 +47,31 @@ class RSK:
         :param Q: array(n_alpha, n_alpha) Q
         :param smooth: boolean: apply the the smoothing algorithm
         :param sigma: specify a constant covariance matrix structure
+        :return: alpha, alpha_filter, alpha_smooth, V, V_filter, V_smooth
+        '''
+        n_periods, n_vars = len(panel_series.times), panel_series.n_variables
+        alpha, alpha_filter, alpha_smooth, _, _ , _ = self._fit(panel_series, a0, Q0, Q, smooth, sigma)
+
+        # use smoothed values to make predictions?
+        if smooth:
+            alpha_pred = alpha_smooth
+        else:
+            alpha_pred = alpha_filter
+        fitted_means = []
+        for i in range(n_periods):
+            n_groups = panel_series.group_counts_mask[i].shape[0]
+            fitted_means.append(self.translation_matrix.dot(alpha_pred[i]).reshape(n_groups, n_vars))
+        return fitted_means
+
+    def _fit(self, panel_series, a0, Q0, Q, smooth=True, sigma=None):
+        '''
+        Fit the RSK model to survey data
+        :param panel_series: A PanelSeries object containing the survey data
+        :param a0: array(n_alpha) initial value for the latent vector alpha
+        :param Q0: array(n_alpha, n_alpha) Q0
+        :param Q: array(n_alpha, n_alpha) Q
+        :param smooth: boolean: apply the the smoothing algorithm
+        :param sigma: specify a constant covariance matrix structure
         :return: array(n_periods, n_vars) RSK estimated means
         '''
 
@@ -74,7 +99,7 @@ class RSK:
             # compute group structure/covariance product
             if sigma is None:
                 sigma = y_cov[i-1]
-            ng_sigma_inv = sp.kron(panel_series.group_counts_mask[i-1], inv(sigma) )
+            ng_sigma_inv = sp.kron(panel_series.group_counts_mask[i-1], inv(sigma))
 
             # predict
             alpha[i] = transition_matrix.dot(alpha_filter[i-1, :])
@@ -93,19 +118,4 @@ class RSK:
         # remove the dummy NULL entry at start of all arrays
         alpha, alpha_filter, V, V_filter = alpha[1:], alpha_filter[1:], V[1:], V_filter[1:]
 
-        self.alpha = alpha
-        self.alpha_filter = alpha_filter
-        self.alpha_smooth = alpha_smooth
-        self.V_smooth = V_smooth
-
-        # use smoothed values to make predictions?
-        if smooth:
-            alpha_pred = alpha_smooth
-        else:
-            alpha_pred = alpha_filter
-
-        fitted_means = []
-        for i in range(n_periods):
-            n_groups = panel_series.group_counts_mask[i].shape[0]
-            fitted_means.append(self.translation_matrix.dot(alpha_pred[i]).reshape(n_groups, n_vars))
-        return fitted_means
+        return alpha, alpha_filter, alpha_smooth, V, V_filter, V_smooth

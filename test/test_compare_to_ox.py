@@ -41,10 +41,11 @@ class TestCompareToOx(TestCase):
         assert sp.allclose(ox_cov, sp.vstack(py_cov)), "Python covariance does not match OX covariance."
 
         rsk_filter = RSK(sp.matrix(params["transition_matrix"]), sp.matrix(params["translation_matrix"]))
-        rsk_filter.fit(panel_series, sp.matrix(params["a0"]), sp.matrix(params["Q0"]), sp.matrix(params["Q"]), sigma=sp.eye(1))
+
+        rsk_alpha, _, _, _, _, _ = rsk_filter._fit(panel_series, sp.matrix(params["a0"]), sp.matrix(params["Q0"]), sp.matrix(params["Q"]), sigma=sp.eye(1))
 
         # check alphas
-        assert sp.allclose(alpha.A1.tolist()[1:], rsk_filter.alpha.flatten().tolist())
+        assert sp.allclose(alpha.A1.tolist()[1:], rsk_alpha.flatten().tolist())
 
 
     def test2(self):
@@ -76,10 +77,10 @@ class TestCompareToOx(TestCase):
         assert sp.allclose(ox_cov[1:], py_cov), "Python covariance does not match OX covariance."
 
         rsk_filter = RSK(sp.matrix(params["transition_matrix"]), sp.matrix(params["translation_matrix"]))
-        rsk_filter.fit(panel_series, sp.matrix(params["a0"]), sp.matrix(params["Q0"]), sp.matrix(params["Q"]), sigma=sp.eye(1))
+        rsk_alpha, _, _, _, _, _ = rsk_filter._fit(panel_series, sp.matrix(params["a0"]), sp.matrix(params["Q0"]), sp.matrix(params["Q"]), sigma=sp.eye(1))
 
         # check alphas
-        assert sp.allclose(alpha.transpose()[1:].tolist(), rsk_filter.alpha.reshape(-1,6).tolist())
+        assert sp.allclose(alpha.transpose()[1:].tolist(), rsk_alpha.reshape(-1,6).tolist())
 
     def test4(self):
         '''Test smoothing implementation'''
@@ -100,20 +101,20 @@ class TestCompareToOx(TestCase):
         panel_series = PanelSeries.from_list(rows)
 
         rsk_filter = RSK(sp.matrix(params["transition_matrix"]), sp.matrix(params["translation_matrix"]))
-        rsk_filter.fit(panel_series, sp.matrix(params["a0"]), sp.matrix(params["Q0"]), sp.matrix(params["Q"]), sigma=sp.eye(1), smooth=True)
+        alpha, alpha_filter, alpha_smooth, V, V_filter, V_smooth = rsk_filter._fit(panel_series, sp.matrix(params["a0"]), sp.matrix(params["Q0"]), sp.matrix(params["Q"]), sigma=sp.eye(1), smooth=True)
 
         # check alphas
-        assert sp.allclose(ox_alpha.transpose()[1:].tolist(),  rsk_filter.alpha.reshape(-1,1).tolist())
+        assert sp.allclose(ox_alpha.transpose()[1:].tolist(),alpha.reshape(-1,1).tolist())
 
         # verify smooth is not same as non-smooth
-        assert not sp.allclose( rsk_filter.alpha_smooth.reshape(-1,1).tolist(), rsk_filter.alpha.reshape(1,-1).tolist()[0])
-        assert not sp.allclose( rsk_filter.alpha_smooth.reshape(-1,1).tolist(), rsk_filter.alpha_filter.reshape(1,-1).tolist()[0])
+        assert not sp.allclose( alpha_smooth.reshape(-1,1).tolist(), alpha.reshape(1,-1).tolist()[0])
+        assert not sp.allclose( alpha_smooth.reshape(-1,1).tolist(), alpha_filter.reshape(1,-1).tolist()[0])
 
         # verify ox alpha matches alpha
-        assert sp.allclose( ox_alpha[0].transpose()[1:].flatten().tolist()[0], rsk_filter.alpha.reshape(1,-1).tolist()[0])
+        assert sp.allclose( ox_alpha[0].transpose()[1:].flatten().tolist()[0], alpha.reshape(1,-1).tolist()[0])
 
         # verify ox alpha_smooth matches alpha_smooth
-        assert sp.allclose(ox_alpha_smooth[0].transpose()[1:].flatten().tolist()[0], rsk_filter.alpha_smooth.reshape(1,-1).tolist())
+        assert sp.allclose(ox_alpha_smooth[0].transpose()[1:].flatten().tolist()[0], alpha_smooth.reshape(1,-1).tolist())
 
         # check alpha filters
-        assert sp.allclose(ox_alpha_filter[0].transpose()[1:].flatten().tolist()[0], rsk_filter.alpha_filter.reshape(1,-1).tolist()[0])
+        assert sp.allclose(ox_alpha_filter[0].transpose()[1:].flatten().tolist()[0], alpha_filter.reshape(1,-1).tolist()[0])
