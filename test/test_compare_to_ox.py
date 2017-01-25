@@ -42,7 +42,7 @@ class TestCompareToOx(TestCase):
 
         rsk_filter = RSK(sp.matrix(params["transition_matrix"]), sp.matrix(params["translation_matrix"]))
 
-        rsk_alpha, _, _, _, _, _ = rsk_filter._fit(panel_series, sp.matrix(params["a0"]), sp.matrix(params["Q0"]), sp.matrix(params["Q"]), sigma=sp.eye(1))
+        rsk_alpha, _, _, _, _, _,_ = rsk_filter._fit(panel_series, sp.matrix(params["a0"]), sp.matrix(params["Q0"]), sp.matrix(params["Q"]), sigma=sp.eye(1))
 
         # check alphas
         assert sp.allclose(alpha.A1.tolist()[1:], rsk_alpha.flatten().tolist())
@@ -77,7 +77,7 @@ class TestCompareToOx(TestCase):
         assert sp.allclose(ox_cov[1:], py_cov), "Python covariance does not match OX covariance."
 
         rsk_filter = RSK(sp.matrix(params["transition_matrix"]), sp.matrix(params["translation_matrix"]))
-        rsk_alpha, _, _, _, _, _ = rsk_filter._fit(panel_series, sp.matrix(params["a0"]), sp.matrix(params["Q0"]), sp.matrix(params["Q"]), sigma=sp.eye(1))
+        rsk_alpha, _, _, _, _, _, _ = rsk_filter._fit(panel_series, sp.matrix(params["a0"]), sp.matrix(params["Q0"]), sp.matrix(params["Q"]), sigma=sp.eye(1))
 
         # check alphas
         assert sp.allclose(alpha.transpose()[1:].tolist(), rsk_alpha.reshape(-1,6).tolist())
@@ -101,7 +101,7 @@ class TestCompareToOx(TestCase):
         panel_series = PanelSeries.from_list(rows)
 
         rsk_filter = RSK(sp.matrix(params["transition_matrix"]), sp.matrix(params["translation_matrix"]))
-        alpha, alpha_filter, alpha_smooth, V, V_filter, V_smooth = rsk_filter._fit(panel_series, sp.matrix(params["a0"]), sp.matrix(params["Q0"]), sp.matrix(params["Q"]), sigma=sp.eye(1), smooth=True)
+        alpha, alpha_filter, alpha_smooth, V, V_filter, V_smooth,_ = rsk_filter._fit(panel_series, sp.matrix(params["a0"]), sp.matrix(params["Q0"]), sp.matrix(params["Q"]), sigma=sp.eye(1), smooth=True)
 
         # check alphas
         assert sp.allclose(ox_alpha.transpose()[1:].tolist(),alpha.reshape(-1,1).tolist())

@@ -36,7 +36,7 @@ class RSK:
             alpha_smooth[i-1] = alpha_filter[i-1] + B[i].dot(alpha_smooth[i] - alpha[i])
             V_smooth[i-1] = V_filter[i-1] + B[i].dot(V_smooth[i]-V[i]).dot(t(B[i]))
 
-        return alpha_smooth, V_smooth
+        return alpha_smooth, V_smooth, B
 
     def fit(self, panel_series, a0, Q0, Q, smooth=True, sigma=None):
         '''
@@ -50,7 +50,7 @@ class RSK:
         :return: alpha, alpha_filter, alpha_smooth, V, V_filter, V_smooth
         '''
         n_periods, n_vars = len(panel_series.times), panel_series.n_variables
-        alpha, alpha_filter, alpha_smooth, _, _ , _ = self._fit(panel_series, a0, Q0, Q, smooth, sigma)
+        alpha, alpha_filter, alpha_smooth, _, _ , _,_ = self._fit(panel_series, a0, Q0, Q, smooth, sigma)
 
         # use smoothed values to make predictions?
         if smooth:
@@ -99,6 +99,9 @@ class RSK:
             # compute group structure/covariance product
             if sigma is None:
                 sigma = y_cov[i-1]
+            elif len(sigma.shape)==3:
+                # sigma is varying in time, pin it to the current time slice
+                sigma = sigma[i]
             ng_sigma_inv = sp.kron(panel_series.group_counts_mask[i-1], inv(sigma))
 
             # predict
@@ -108,14 +111,62 @@ class RSK:
             alpha_filter[i] = alpha[i] + V_filter[i].dot(t(translation_matrix)).dot(ng_sigma_inv).dot(y_means[i - 1].reshape(-1,1) - translation_matrix.dot(alpha[i]))
 
         if smooth:
-            alpha_smooth, V_smooth = self.smooth(alpha, alpha_filter, V, V_filter)
+            alpha_smooth, V_smooth, smoothing_matrix = self.smooth(alpha, alpha_filter, V, V_filter)
 
             # remove dummy entries
             alpha_smooth, V_smooth = alpha_smooth[1:], V_smooth[1:]
         else:
-            alpha_smooth, V_smooth = None, None
+            alpha_smooth, V_smooth, smoothing_matrix = None, None, None
 
         # remove the dummy NULL entry at start of all arrays
         alpha, alpha_filter, V, V_filter = alpha[1:], alpha_filter[1:], V[1:], V_filter[1:]
 
-        return alpha, alpha_filter, alpha_smooth, V, V_filter, V_smooth
+        return alpha, alpha_filter, alpha_smooth, V, V_filter, V_smooth, smoothing_matrix
+
+    def fit_em(self, panel_series, a0, Q0, sigma0):
+        '''
+        Fit the RSK model to survey data
+        :param panel_series: A PanelSeries object containing the survey data
+        :param a0: array(n_alpha) initial value for the latent vector alpha
+        :param Q0: array(n_alpha, n_alpha) Q0
+        :param Q: array(n_alpha, n_alpha) Q
+        :return: array(n_periods, n_vars) RSK estimated means
+        '''
+
+        n_periods, n_vars, n_alpha = len(panel_series.times), panel_series.n_variables, len(a0)
+        Z,F = self.translation_matrix, self.transition_matrix
+        Q = Q0  # TODO Verify this is correct initiation
+        max_iters = 100
+        sigma = sigma0
+        for j in range(max_iters):      # TODO: Replace with a stopping criteria
+            # fit alpha[0],...,alpha[T] the current values of the hyper parameters
+            alpha, alpha_filter, alpha_smooth, V, V_filter, V_smooth, B = self._fit(panel_series, a0, Q0, Q, smooth=True, sigma=sigma0)
+
+            # update sigma
+            sigma = sp.zeros((n_periods, n_vars, n_vars))
+            for k, (time_label, panel) in enumerate(panel_series.data):
+                Nt = panel_series.group_counts_mask[k].sum()
+                mu = Z.dot(alpha[k])
+                ZVZ = Z.dot(V[k]).dot(Z)
+                for j, group in enumerate(panel.data):
+                    Ng = len(group.data)
+                    diff = group.mean() - mu[j]
+                    idx = (j * n_vars, (j + 1) * n_vars)
+                    sigma[k] += (Ng / Nt) * (group.cov() + t(diff).dot(diff) + ZVZ[idx[0]:idx[1], idx[0]:idx[1]])
+
+            # update Q
+            N = 0
+            Q = sp.zeros((n_alpha, n_alpha))
+            for k in range(1, n_periods):
+                # TODO: index error on second term
+                # TODO: which alpha, V?
+                Nt = panel_series.group_counts_mask[k].sum()
+                N+=Nt
+                diff = alpha[k] - F.dot(alpha[k - 1])
+                Q += Nt*(diff.dot(t(diff)) + V[k] + F.dot(V[k-1]).dot(t(F)) - F.dot(B[k]).dot(V[k]) - V[k].dot(B[k]).dot(t(F)))
+            Q = (1/N)*Q
+
+            # update a0, Q0
+            a0 = alpha[0]
+            Q0 = V[0]
+        return self.fit(panel_series, a0, Q, Q0, smooth=True, sigma=sigma)
