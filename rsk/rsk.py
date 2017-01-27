@@ -123,7 +123,7 @@ class RSK:
 
         return alpha, alpha_filter, alpha_smooth, V, V_filter, V_smooth, smoothing_matrix
 
-    def fit_em(self, panel_series, a0, Q0, sigma0):
+    def fit_em(self, panel_series, a0, Q0, sigma0, tolerance=1e-8, max_iters=1000):
         '''
         Fit the RSK model to survey data
         :param panel_series: A PanelSeries object containing the survey data
@@ -136,18 +136,24 @@ class RSK:
         n_periods, n_vars, n_alpha = len(panel_series.times), panel_series.n_variables, len(a0)
         Z,F = self.translation_matrix, self.transition_matrix
         Q = Q0  # TODO Verify this is correct initiation
-        max_iters = 100
         sigma = sigma0
-        for j in range(max_iters):      # TODO: Replace with a stopping criteria
+        error = 100 + tolerance
+        alpha_stale = None
+        iters = 0
+
+        while error>tolerance and iters<max_iters:
             # fit alpha[0],...,alpha[T] the current values of the hyper parameters
-            alpha, alpha_filter, alpha_smooth, V, V_filter, V_smooth, B = self._fit(panel_series, a0, Q0, Q, smooth=True, sigma=sigma0)
+            _, _, alpha_smooth, _, _, V_smooth, B = self._fit(panel_series, a0, Q0, Q, smooth=True, sigma=sigma0)
+            alpha = alpha_smooth
+            V = V_smooth
 
             # update sigma
             sigma = sp.zeros((n_periods, n_vars, n_vars))
+
             for k, (time_label, panel) in enumerate(panel_series.data):
                 Nt = panel_series.group_counts_mask[k].sum()
                 mu = Z.dot(alpha[k])
-                ZVZ = Z.dot(V[k]).dot(Z)
+                ZVZ = Z.dot(V[k]).dot(t(Z))
                 for j, group in enumerate(panel.data):
                     Ng = len(group.data)
                     diff = group.mean() - mu[j]
@@ -158,8 +164,6 @@ class RSK:
             N = 0
             Q = sp.zeros((n_alpha, n_alpha))
             for k in range(1, n_periods):
-                # TODO: index error on second term
-                # TODO: which alpha, V?
                 Nt = panel_series.group_counts_mask[k].sum()
                 N+=Nt
                 diff = alpha[k] - F.dot(alpha[k - 1])
@@ -169,4 +173,17 @@ class RSK:
             # update a0, Q0
             a0 = alpha[0]
             Q0 = V[0]
-        return self.fit(panel_series, a0, Q, Q0, smooth=True, sigma=sigma)
+
+            # compute the error and prepare for next step
+            if alpha_stale is None:
+                error = tolerance + 1000
+            else:
+                error = np.linalg.norm(alpha.reshape((-1,)) - alpha_stale.reshape((-1,)))
+                print("Iteration %d, error: %.8f" % (iters,error))
+            alpha_stale = alpha
+            iters +=1
+
+        if iters==max_iters:
+            Warning("RSK EM Algorithm Failed to Converege!")
+        print("Converged in %d iterations" % iters)
+        return self.fit(panel_series, a0, Q0, Q, smooth=True, sigma=sigma)
