@@ -1,3 +1,4 @@
+import warnings
 import scipy as sp
 import numpy as np
 from scipy import transpose as t
@@ -95,7 +96,6 @@ class RSK:
         # filter iterations
         transition_matrix, translation_matrix = self.transition_matrix, self.translation_matrix
         for i in range(1, n_periods+1):
-
             # compute group structure/covariance product
             if sigma is None:
                 sigma = y_cov[i-1]
@@ -123,13 +123,15 @@ class RSK:
 
         return alpha, alpha_filter, alpha_smooth, V, V_filter, V_smooth, smoothing_matrix
 
-    def fit_em(self, panel_series, a0, Q0, sigma0, tolerance=1e-8, max_iters=1000):
+    def fit_em(self, panel_series, a0, Q0, sigma0, tolerance=1e-4, max_iters=100):
         '''
         Fit the RSK model to survey data
         :param panel_series: A PanelSeries object containing the survey data
         :param a0: array(n_alpha) initial value for the latent vector alpha
         :param Q0: array(n_alpha, n_alpha) Q0
         :param Q: array(n_alpha, n_alpha) Q
+        :param tolerance: float
+        :param max_iters: int
         :return: array(n_periods, n_vars) RSK estimated means
         '''
 
@@ -143,7 +145,7 @@ class RSK:
 
         while error>tolerance and iters<max_iters:
             # fit alpha[0],...,alpha[T] the current values of the hyper parameters
-            _, _, alpha_smooth, _, _, V_smooth, B = self._fit(panel_series, a0, Q0, Q, smooth=True, sigma=sigma0)
+            _, _, alpha_smooth, _, _, V_smooth, B = self._fit(panel_series, a0, Q0, Q, smooth=True, sigma=sigma)
             alpha = alpha_smooth
             V = V_smooth
 
@@ -151,8 +153,10 @@ class RSK:
             sigma = sp.zeros((n_periods, n_vars, n_vars))
 
             for k, (time_label, panel) in enumerate(panel_series.data):
+                n_groups = panel_series.group_counts_mask[k].shape[0]
                 Nt = panel_series.group_counts_mask[k].sum()
-                mu = Z.dot(alpha[k])
+                mu = Z.dot(alpha[k]).reshape((n_groups, n_vars))  # mu is a stacked vector
+
                 ZVZ = Z.dot(V[k]).dot(t(Z))
                 for j, group in enumerate(panel.data):
                     Ng = len(group.data)
@@ -184,6 +188,7 @@ class RSK:
             iters +=1
 
         if iters==max_iters:
-            Warning("RSK EM Algorithm Failed to Converege!")
-        print("Converged in %d iterations" % iters)
+            warnings.warn("RSK EM Algorithm Failed to converege before max iterations %d reached.  Current error=%.8f" % (max_iters, error))
+        else:
+            print("Converged in %d iterations..." % iters)
         return self.fit(panel_series, a0, Q0, Q, smooth=True, sigma=sigma)
