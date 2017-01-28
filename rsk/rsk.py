@@ -98,11 +98,15 @@ class RSK:
         for i in range(1, n_periods+1):
             # compute group structure/covariance product
             if sigma is None:
-                sigma = y_cov[i-1]
+                # no sigma provided, we use the covariance in the time slice
+                _sigma = y_cov[i-1]
             elif len(sigma.shape)==3:
                 # sigma is varying in time, pin it to the current time slice
-                sigma = sigma[i]
-            ng_sigma_inv = sp.kron(panel_series.group_counts_mask[i-1], inv(sigma))
+                _sigma = sigma[i-1]
+            else:
+                # constant sigma specified
+                _sigma = sigma
+            ng_sigma_inv = sp.kron(panel_series.group_counts_mask[i-1], inv(_sigma))
 
             # predict
             alpha[i] = transition_matrix.dot(alpha_filter[i-1, :])
@@ -123,13 +127,14 @@ class RSK:
 
         return alpha, alpha_filter, alpha_smooth, V, V_filter, V_smooth, smoothing_matrix
 
-    def fit_em(self, panel_series, a0, Q0, sigma0, tolerance=1e-4, max_iters=100):
+    def fit_em(self, panel_series, a0, Q0, sigma0=None, tolerance=1e-4, max_iters=100):
         '''
         Fit the RSK model to survey data
         :param panel_series: A PanelSeries object containing the survey data
         :param a0: array(n_alpha) initial value for the latent vector alpha
         :param Q0: array(n_alpha, n_alpha) Q0
         :param Q: array(n_alpha, n_alpha) Q
+        :param sigma0: initial covariance structure. If none, the covariance of the panel_series is used
         :param tolerance: float
         :param max_iters: int
         :return: array(n_periods, n_vars) RSK estimated means
@@ -137,7 +142,7 @@ class RSK:
 
         n_periods, n_vars, n_alpha = len(panel_series.times), panel_series.n_variables, len(a0)
         Z,F = self.translation_matrix, self.transition_matrix
-        Q = Q0  # TODO Verify this is correct initiation
+        Q = Q0
         sigma = sigma0
         error = 100 + tolerance
         alpha_stale = None
@@ -185,10 +190,10 @@ class RSK:
                 error = np.linalg.norm(alpha.reshape((-1,)) - alpha_stale.reshape((-1,)))
                 print("Iteration %d, error: %.8f" % (iters,error))
             alpha_stale = alpha
-            iters +=1
+            iters += 1
 
         if iters==max_iters:
-            warnings.warn("RSK EM Algorithm Failed to converege before max iterations %d reached.  Current error=%.8f" % (max_iters, error))
+            warnings.warn("RSK EM Algorithm Failed to converge before max iterations %d reached.  Current error=%.8f" % (max_iters, error))
         else:
             print("Converged in %d iterations..." % iters)
         return self.fit(panel_series, a0, Q0, Q, smooth=True, sigma=sigma)
