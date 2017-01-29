@@ -23,13 +23,14 @@ class PanelSeries:
             for panel in panels:
                 panel.time = float(panel.time)
 
+        # sort panel by time variable
         self.data = sorted([(panel.time, panel) for panel in panels], key=lambda x: x[0])
         self.times = [time for time,panel in self.data]
         self.variable_names = variable_names
 
         # verify that we have balanced individuals
-        groups = [group.name for group in panels[0].data]
-        if not all([groups == [group.name for group in panel.data] for panel in panels]):
+        groups = [group.name for group in self.data[0][1].data]
+        if not all([groups == [group.name for group in panel.data] for (_,panel) in self.data]):
             raise ValueError("Currently, all panels must have the same members in the same order.")
         self.groups = groups
 
@@ -37,11 +38,11 @@ class PanelSeries:
         # compute group masks and check variables
         #
         group_counts_mask = []
-        _, n_vars = panels[0].data[0].data.shape
+        _, n_vars = self.data[0][1].data[0].data.shape
         self.n_variables = n_vars
-        for panel in panels:
-            group_sizes = [group.data.shape[0] for group in panel.data]
-            var_counts = [group.data.shape[1] for group in panel.data]
+        for (time,panel) in self.data:
+            group_sizes = [group.size for group in panel.data]
+            var_counts = [group.n_vars for group in panel.data]
             if not all([v==n_vars for v in var_counts]):
                 raise ValueError("Must have same number of variables for each individual!")
             group_counts_mask.append(sp.diag(group_sizes))
@@ -141,6 +142,8 @@ class Group:
             self.data = sp.array(observations)
         else:
             self.data = observations
+        self.size = self.data.shape[0]
+        self.n_vars = self.data.shape[1]
 
     def mean(self):
         return sp.mean(self.data, axis=0)
