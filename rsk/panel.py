@@ -1,5 +1,6 @@
 import csv
 import scipy as sp
+from functools import reduce
 
 def is_numeric(entry):
     try:
@@ -48,12 +49,22 @@ class PanelSeries:
             group_counts_mask.append(sp.diag(group_sizes))
         self.group_counts_mask = group_counts_mask
 
+    def mean(self):
+        '''
+        Compute mean over entire panel series
+        :return: vector of means
+        '''
+        pairs = [(panel.size(), panel.sum()) for _, panel in self.data]
+        totals = reduce(lambda x,y: (x[0]+y[0], x[1] + y[1]), pairs)
+        print(totals)
+        return totals[1]/totals[0]
+
     def means(self):
         '''
         compute group means matrix (n_groups x n_vars)
         :return: list of matrices by (n_groups x n_vars)
         '''
-        return [panel.means() for t,panel in self.data]
+        return [panel.means() for _, panel in self.data]
 
     def cov(self):
         '''
@@ -172,6 +183,15 @@ class Panel:
         '''
         self.time = time
         self.data = sorted(groups, key=lambda x: x.name)
+
+    def size(self):
+        return sum([group.size for group in self.data])
+
+    def sum(self):
+        return sum([group.mean()*group.size for group in self.data])
+
+    def mean(self):
+        return self.sum()/self.size()
 
     def means(self):
         return sp.vstack([group.mean() for group in self.data])

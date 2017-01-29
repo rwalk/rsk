@@ -91,12 +91,13 @@ class RSK:
         # V covariance setup
         V = sp.zeros((n_periods + 1, n_alpha, n_alpha))
         V_filter = sp.zeros((n_periods+1, n_alpha, n_alpha))
-        V_filter[0]= Q0
+        V_filter[0] = Q0
 
         # filter iterations
         transition_matrix, translation_matrix = self.transition_matrix, self.translation_matrix
         for i in range(1, n_periods+1):
             # compute group structure/covariance product
+
             if sigma is None:
                 # no sigma provided, we use the covariance in the time slice
                 _sigma = y_cov[i-1]
@@ -156,28 +157,27 @@ class RSK:
 
             # update sigma
             sigma = sp.zeros((n_periods, n_vars, n_vars))
-
             for k, (time_label, panel) in enumerate(panel_series.data):
                 n_groups = panel_series.group_counts_mask[k].shape[0]
                 Nt = panel_series.group_counts_mask[k].sum()
                 mu = Z.dot(alpha[k]).reshape((n_groups, n_vars))  # mu is a stacked vector
-
                 ZVZ = Z.dot(V[k]).dot(t(Z))
+                panel_mean = panel.mean()
                 for j, group in enumerate(panel.data):
-                    Ng = len(group.data)
-                    diff = group.mean() - mu[j]
+                    Ng = group.size
+                    diff1 = (group.mean() - mu[j]).reshape((-1,1))
+                    diff2 = (panel_mean - mu[j]).reshape((-1,1))
                     idx = (j * n_vars, (j + 1) * n_vars)
-                    sigma[k] += (Ng / Nt) * (group.cov() + t(diff).dot(diff) + ZVZ[idx[0]:idx[1], idx[0]:idx[1]])
+                    sigma[k] += (Ng / Nt) * (group.cov() + diff1.dot(t(diff2)) + ZVZ[idx[0]:idx[1], idx[0]:idx[1]])
 
             # update Q
             N = 0
             Q = sp.zeros((n_alpha, n_alpha))
+            N = sum([panel.size() for _,panel in panel_series.data])
             for k in range(1, n_periods):
                 Nt = panel_series.group_counts_mask[k].sum()
-                N+=Nt
                 diff = alpha[k] - F.dot(alpha[k - 1])
-                Q += Nt*(diff.dot(t(diff)) + V[k] + F.dot(V[k-1]).dot(t(F)) - F.dot(B[k]).dot(V[k]) - V[k].dot(B[k]).dot(t(F)))
-            Q = (1/N)*Q
+                Q += (Nt/N) * (diff.dot(t(diff)) + V[k] + F.dot(V[k-1]).dot(t(F)) - F.dot(B[k]).dot(V[k]) - V[k].dot(B[k]).dot(t(F)))
 
             # update a0, Q0
             a0 = alpha[0]
