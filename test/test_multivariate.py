@@ -89,5 +89,5 @@ class TestMultivariate(TestCase):
                        sp.matrix(params["Q"]), sigma=sp.matrix(params["sigma"]))
 
         a1 = alpha.transpose()
-        a2 = np.squeeze(rsk_alpha)
+        a2 = np.squeeze(rsk_alpha)[1:]
         assert sp.allclose(a1, a2), "Alpha does not match OX alpha"

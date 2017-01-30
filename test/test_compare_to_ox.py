@@ -45,7 +45,7 @@ class TestCompareToOx(TestCase):
         rsk_alpha, _, _, _, _, _,_ = rsk_filter._fit(panel_series, sp.matrix(params["a0"]), sp.matrix(params["Q0"]), sp.matrix(params["Q"]), sigma=sp.eye(1))
 
         # check alphas
-        assert sp.allclose(alpha.A1.tolist()[1:], rsk_alpha.flatten().tolist())
+        assert sp.allclose(alpha.A1.tolist()[1:], rsk_alpha.flatten().tolist()[1:])
 
 
     def test2(self):
@@ -71,7 +71,7 @@ class TestCompareToOx(TestCase):
         py_means, py_cov = panel_series.means(), sp.vstack(panel_series.cov())
 
         # check means
-        assert sp.allclose(ox_means, sp.vstack(py_means)), "Python means do not match OX means"
+        assert sp.allclose(ox_means[1:], sp.vstack(py_means)[1:]), "Python means do not match OX means"
 
         # check covs
         assert sp.allclose(ox_cov[1:], py_cov), "Python covariance does not match OX covariance."
@@ -80,7 +80,7 @@ class TestCompareToOx(TestCase):
         rsk_alpha, _, _, _, _, _, _ = rsk_filter._fit(panel_series, sp.matrix(params["a0"]), sp.matrix(params["Q0"]), sp.matrix(params["Q"]), sigma=sp.eye(1))
 
         # check alphas
-        assert sp.allclose(alpha.transpose()[1:].tolist(), rsk_alpha.reshape(-1,6).tolist())
+        assert sp.allclose(alpha.transpose()[1:].tolist(), rsk_alpha.reshape(-1,6).tolist()[1:])
 
     def test4(self):
         '''Test smoothing implementation'''
@@ -104,17 +104,17 @@ class TestCompareToOx(TestCase):
         alpha, alpha_filter, alpha_smooth, V, V_filter, V_smooth,_ = rsk_filter._fit(panel_series, sp.matrix(params["a0"]), sp.matrix(params["Q0"]), sp.matrix(params["Q"]), sigma=sp.eye(1), smooth=True)
 
         # check alphas
-        assert sp.allclose(ox_alpha.transpose()[1:].tolist(),alpha.reshape(-1,1).tolist())
+        assert sp.allclose(ox_alpha.transpose()[1:].tolist(),alpha.reshape(-1,1).tolist()[1:])
 
         # verify smooth is not same as non-smooth
         assert not sp.allclose( alpha_smooth.reshape(-1,1).tolist(), alpha.reshape(1,-1).tolist()[0])
         assert not sp.allclose( alpha_smooth.reshape(-1,1).tolist(), alpha_filter.reshape(1,-1).tolist()[0])
 
         # verify ox alpha matches alpha
-        assert sp.allclose( ox_alpha[0].transpose()[1:].flatten().tolist()[0], alpha.reshape(1,-1).tolist()[0])
+        assert sp.allclose( ox_alpha[0].transpose()[1:].flatten().tolist()[0], alpha.reshape(1,-1).tolist()[0][1:])
 
         # verify ox alpha_smooth matches alpha_smooth
-        assert sp.allclose(ox_alpha_smooth[0].transpose()[1:].flatten().tolist()[0], alpha_smooth.reshape(1,-1).tolist())
+        assert sp.allclose(ox_alpha_smooth[0].transpose()[1:].flatten().tolist()[0], alpha_smooth[1:].reshape(1,-1).tolist())
 
         # check alpha filters
-        assert sp.allclose(ox_alpha_filter[0].transpose()[1:].flatten().tolist()[0], alpha_filter.reshape(1,-1).tolist()[0])
+        assert sp.allclose(ox_alpha_filter[0].transpose()[1:].flatten().tolist()[0], alpha_filter[1:].reshape(1,-1).tolist()[0])

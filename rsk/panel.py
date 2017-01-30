@@ -56,7 +56,6 @@ class PanelSeries:
         '''
         pairs = [(panel.size(), panel.sum()) for _, panel in self.data]
         totals = reduce(lambda x,y: (x[0]+y[0], x[1] + y[1]), pairs)
-        print(totals)
         return totals[1]/totals[0]
 
     def means(self):

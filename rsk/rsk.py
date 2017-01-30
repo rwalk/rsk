@@ -117,18 +117,12 @@ class RSK:
 
         if smooth:
             alpha_smooth, V_smooth, smoothing_matrix = self.smooth(alpha, alpha_filter, V, V_filter)
-
-            # remove dummy entries
-            alpha_smooth, V_smooth = alpha_smooth[1:], V_smooth[1:]
         else:
             alpha_smooth, V_smooth, smoothing_matrix = None, None, None
 
-        # remove the dummy NULL entry at start of all arrays
-        alpha, alpha_filter, V, V_filter = alpha[1:], alpha_filter[1:], V[1:], V_filter[1:]
-
         return alpha, alpha_filter, alpha_smooth, V, V_filter, V_smooth, smoothing_matrix
 
-    def fit_em(self, panel_series, a0, Q0, sigma0=None, tolerance=1e-4, max_iters=100):
+    def fit_em(self, panel_series, a0, Q0, sigma0=None, constant_sigma=False, tolerance=1e-4, max_iters=100):
         '''
         Fit the RSK model to survey data
         :param panel_series: A PanelSeries object containing the survey data
@@ -170,14 +164,16 @@ class RSK:
                     idx = (j * n_vars, (j + 1) * n_vars)
                     sigma[k] += (Ng / Nt) * (group.cov() + diff1.dot(t(diff2)) + ZVZ[idx[0]:idx[1], idx[0]:idx[1]])
 
+            if constant_sigma:
+                sigma = sigma.mean(axis=0)
+
             # update Q
-            N = 0
             Q = sp.zeros((n_alpha, n_alpha))
             N = sum([panel.size() for _,panel in panel_series.data])
-            for k in range(1, n_periods):
+            for k in range(n_periods):
                 Nt = panel_series.group_counts_mask[k].sum()
-                diff = alpha[k] - F.dot(alpha[k - 1])
-                Q += (Nt/N) * (diff.dot(t(diff)) + V[k] + F.dot(V[k-1]).dot(t(F)) - F.dot(B[k]).dot(V[k]) - V[k].dot(B[k]).dot(t(F)))
+                diff = alpha[k+1] - F.dot(alpha[k])
+                Q += (Nt/N) * (diff.dot(t(diff)) + V[k+1] + F.dot(V[k]).dot(t(F)) - F.dot(B[k+1]).dot(V[k+1]) - V[k+1].dot(B[k+1]).dot(t(F)))
 
             # update a0, Q0
             a0 = alpha[0]
@@ -193,7 +189,7 @@ class RSK:
             iters += 1
 
         if iters==max_iters:
-            warnings.warn("RSK EM Algorithm Failed to converge before max iterations %d reached.  Current error=%.8f" % (max_iters, error))
+            warnings.warn("RSK EM algorithm failed to converge before max iterations %d reached.  Current error=%.8f" % (max_iters, error))
         else:
             print("Converged in %d iterations..." % iters)
-        return self.fit(panel_series, a0, Q0, Q, smooth=True, sigma=sigma)
+        return self.fit(panel_series, a0, Q0, Q, smooth=True, sigma=sigma), sigma
