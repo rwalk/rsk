@@ -122,7 +122,7 @@ class RSK:
 
         return alpha, alpha_filter, alpha_smooth, V, V_filter, V_smooth, smoothing_matrix
 
-    def fit_em(self, panel_series, a0, Q0, sigma0=None, constant_sigma=False, tolerance=1e-4, max_iters=100):
+    def fit_em(self, panel_series, a0, Q0, sigma0=None, constant_sigma=False, fit_a0=False, tolerance=1e-4, max_iters=100):
         '''
         Fit the RSK model to survey data
         :param panel_series: A PanelSeries object containing the survey data
@@ -130,6 +130,8 @@ class RSK:
         :param Q0: array(n_alpha, n_alpha) Q0
         :param Q: array(n_alpha, n_alpha) Q
         :param sigma0: initial covariance structure. If none, the covariance of the panel_series is used
+        :param constant_sigma: boolean: if true, average sigma across time slices at end of each iteration
+        :param fit_a0: boolean: if true, alpha0 is estimated during each iteration. (not recommended)
         :param tolerance: float
         :param max_iters: int
         :return: array(n_periods, n_vars) RSK estimated means
@@ -162,7 +164,7 @@ class RSK:
                     diff1 = (group.mean() - mu[j]).reshape((-1,1))
                     diff2 = (panel_mean - mu[j]).reshape((-1,1))
                     idx = (j * n_vars, (j + 1) * n_vars)
-                    sigma[k] += (Ng / Nt) * (group.cov() + diff1.dot(t(diff2)) + ZVZ[idx[0]:idx[1], idx[0]:idx[1]])
+                    sigma[k] += (Ng / Nt) * (group.cov(bias=True) + diff1.dot(t(diff2)) + ZVZ[idx[0]:idx[1], idx[0]:idx[1]])
 
             if constant_sigma:
                 sigma = sigma.mean(axis=0)
@@ -176,8 +178,9 @@ class RSK:
                 Q += (Nt/N) * (diff.dot(t(diff)) + V[k+1] + F.dot(V[k]).dot(t(F)) - F.dot(B[k+1]).dot(V[k+1]) - V[k+1].dot(B[k+1]).dot(t(F)))
 
             # update a0, Q0
-            a0 = alpha[0]
             Q0 = V[0]
+            if fit_a0:
+                a0 = alpha[0]
 
             # compute the error and prepare for next step
             if alpha_stale is None:

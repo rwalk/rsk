@@ -165,12 +165,13 @@ class Group:
         '''
         return sp.var(self.data, axis=0, ddof=1)
 
-    def cov(self):
+    def cov(self, bias=False):
         '''
         Group level covariance
+        :param: bias: boolean: if true, compute biased variance
         :return: covariance matrix (n_vars x n_vars)
         '''
-        return sp.cov(self.data, rowvar=False, ddof=1)
+        return sp.cov(self.data, rowvar=False, bias=bias)
 
 class Panel:
 
@@ -202,10 +203,11 @@ class Panel:
         '''
         return sp.vstack([group.var() for group in self.data])
 
-    def cov(self):
+    def cov(self, bias=False):
         '''
         covariance across all groups in this time slice
+        :param: bias: boolean: if true, compute biased variance
         :return: covariance matrix (n_vars x n_vars)
         '''
         M = sp.vstack([group.data for group in self.data])
-        return sp.matrix(sp.cov(M, rowvar=False, ddof=1))
+        return sp.matrix(sp.cov(M, rowvar=False, bias=bias))
