@@ -51,7 +51,7 @@ def trial():
     # fit means with RSK
     rsk = RSK(F,Z)
     fitted_means = rsk.fit(panel_series, a0, Q, Q, sigma=sigma_value*sp.eye(1))
-    smoothed_fitted_means = rsk.fit(panel_series, a0, Q, Q, smooth=True, sigma=sigma_value*sp.eye(1))
+    smoothed_fitted_means= rsk.fit(panel_series, a0, Q, Q, smooth=True, sigma=sigma_value*sp.eye(1))
     return true_means, raw_means, fitted_means, smoothed_fitted_means, y
 
 def example():

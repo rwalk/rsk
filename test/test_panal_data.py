@@ -97,7 +97,7 @@ class TestPanels(TestCase):
         means = panel_series.means()
         assert sp.allclose(means[0], sp.matrix([[ 2.33333333, 1.66666667], [2.66666667,  4.0 ]]))
         assert sp.allclose(covs[0], sp.matrix([[11.5,-12.9], [-12.9, 185.7667]]))
-
+        assert sp.allclose(panel_series.mean(), sp.matrix([2.4166666667, 2.6666666667]))
 
 
 

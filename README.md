@@ -67,7 +67,11 @@ The translation matrix is an `n_vars` by `n_alpha` array mapping the latent vect
 
 To apply the repeated surveys Kalman filter, call the `fit` method on an RSK instance, passing in a PanelSeries object:
 ```python
-fitted_means = rsk_filter.fit(panel_series, a0, Q0, Q)
+fitted_means = rsk_filter.fit(panel_series, a0, Q0, Q, sigma=None)
+```
+There is also an experimental version of the EM algorithm proposed by Lind, which will attempt to fit `sigma` and `Q` as part of the estimation process:
+```python
+fitted_means = rsk_filter.fit_em(panel_series, a0, Q0, sigma0)
 ```
 
 Fitted means is an `n_periods` by `n_vars` matrix containing the means estimated by the RSK algorithm. After `fit` has been applied, the `rsk.alpha` vector and other fitted parameters become available as attributes of the RSK
