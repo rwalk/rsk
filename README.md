@@ -5,7 +5,7 @@ It is based on the author's original source written for the Ox language.
 ## Overview
 Suppose we observe a population of individuals at several points in time.  At each point in time, we can measure the mean of a variable of interest in the population.  But if the true mean of the population is changing smoothly and gradually over time, we might imagine that the measurement of a mean at any particular point in time might be improved by considering data from the other observed time slices.  This is the idea behind the Kalman filter--exploit the temporal dynamics to smooth out fluctuations in point-in-time estimates.
 
-![img](examples/example.png)
+![img](examples/simulated_data/example.png) ![img](examples/simulated_data/error_density.png)
 
 See [examples](examples/) for further illustration and applications of the Kalman filter.
 
@@ -69,12 +69,15 @@ To apply the repeated surveys Kalman filter, call the `fit` method on an RSK ins
 ```python
 fitted_means = rsk_filter.fit(panel_series, a0, Q0, Q, sigma=None)
 ```
-There is also an experimental version of the EM algorithm proposed by Lind, which will attempt to fit `sigma` and `Q` as part of the estimation process:
-```python
-fitted_means = rsk_filter.fit_em(panel_series, a0, Q0, sigma0)
-```
 
-Fitted means is an `n_periods` by `n_vars` matrix containing the means estimated by the RSK algorithm. After `fit` has been applied, the `rsk.alpha` vector and other fitted parameters become available as attributes of the RSK
+In most cases, `Q` and `sigma` are unknown and will need to be estimated. In this case, use the `fit_em` method
+```python
+fitted_means, sigma = rsk_filter.fit_em(panel_series, a0, Q0, sigma0)
+```
+This method runs the EM algorithm developed by Lind. When working with `fit_em`, the algorithm may sometimes fail to converege.
+When this happens, using a smaller `Q0` may help.
+
+The resulting `fitted_means` object from `fit` and `fit_em` is an `n_periods` by `n_vars` matrix containing the means estimated by the RSK algorithm. After `fit` has been applied, the `rsk.alpha` vector and other fitted parameters become available as attributes of the RSK
  instance. 
 
 ## Notation guide

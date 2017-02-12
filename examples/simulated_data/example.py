@@ -16,6 +16,10 @@ def jitter(arr):
     return arr + np.random.randn(len(arr)) * err
 
 def trial():
+    '''
+    This example generates synthetic data following the model in equations 5-9 of
+    http://folk.uio.no/jlind/papers/DP333.pdf
+    '''
     # randomly chosen translation matrix
     Z = matrix([[1.2,.3]])
 
@@ -50,16 +54,14 @@ def trial():
 
     # fit means with RSK
     rsk = RSK(F,Z)
-    fitted_means = rsk.fit(panel_series, a0, Q, Q, sigma=sigma_value*sp.eye(1))
-    smoothed_fitted_means= rsk.fit(panel_series, a0, Q, Q, smooth=True, sigma=sigma_value*sp.eye(1))
-    return true_means, raw_means, fitted_means, smoothed_fitted_means, y
+    fitted_means, sigma_fitted = rsk.fit_em(panel_series, a0, sigma_value*Q)
+    return true_means, raw_means, fitted_means, y
 
 def example():
     '''
-    This example generates synthetic data following the model in equations 5-9 of
-    http://folk.uio.no/jlind/papers/DP333.pdf
+    Run and plot a trial
     '''
-    true_means, raw_means, fitted_means, smoothed_fitted_means,y = trial()
+    true_means, raw_means, fitted_means, y = trial()
     #
     # plot figure
     #
@@ -68,12 +70,12 @@ def example():
     plt.scatter(np.repeat(sp.matrix(t), 200, axis=1).A1, y.reshape((-1,)), linewidths=0.01, s=12, c="r", label="data")
     plt.scatter(jitter(t), true_means, linewidths=0.25, s=72, c="yellow",label="true mean")
     plt.scatter(jitter(t), fitted_means, linewidths=0.25, s=72, c="blue", label="rsk mean")
-    plt.scatter(jitter(t), smoothed_fitted_means, linewidths=0.25, s=64, c="plum", label="rsk smoothed mean")
-    plt.scatter(jitter(t), raw_means, linewidths=0.25, s=72, c="cyan", label="Naive mean")
+    plt.scatter(jitter(t), raw_means, linewidths=0.25, s=72, c="cyan", label="naive mean")
     plt.legend()
     plt.title("Repeated Surveys Kalman Filter Demo")
     plt.xlabel("time")
     plt.ylabel("value")
+    plt.savefig(os.path.join(os.path.dirname(__file__), "example.png"))
     plt.show()
 
 def compute_error(X,Y):
@@ -83,18 +85,27 @@ def compute_error(X,Y):
     return sp.sqrt(s)
 
 def simulated_error(N):
+    '''
+    Repeats the simulation N times and plots the error density
+    :param N:
+    :return:
+    '''
     raw_errors = []
     rsk_errors = []
-    smth_errors = []
     for i in range(N):
-        true_means, raw_means, fitted_means, smoothed_fitted_means, _ = trial()
+        true_means, raw_means, fitted_means, _ = trial()
         raw_errors.append(compute_error(true_means, raw_means))
         rsk_errors.append(compute_error(true_means, fitted_means))
-        smth_errors.append(compute_error(true_means,smoothed_fitted_means))
+
+    naive_mean, naive_std = np.mean(raw_errors), np.std(raw_errors)
+    rsk_mean, rsk_std = np.mean(rsk_errors), np.std(rsk_errors)
+    text = r"RSK: $\bar{\mu}=%.4f$, $\bar{\sigma}=%.4f$" % (rsk_mean, rsk_std) + "\n" + \
+           r"Naive: $\bar{\mu}=%.4f$, $\bar{\sigma}=%.4f$" % (naive_mean, naive_std)
+
+
     print("Simulation results with %d trials:" % N)
-    print("\tAvg. Naive Means Error: %.4f" % np.mean(raw_errors))
-    print("\tAvg. RSK Error: %.4f" % np.mean(rsk_errors))
-    print("\tAvg. Smoothed RSK Error: %.4f" % np.mean(smth_errors))
+    print("\tAvg. Naive means error=%.4f, stdev=%.4f" % (naive_mean,naive_std))
+    print("\tAvg. RSK means error=%.4f, stdev=%.4f" % (rsk_mean,naive_std))
 
     # plot continuous density
     fig = plt.figure()
@@ -105,11 +116,14 @@ def simulated_error(N):
     plt.plot(xs, density_raw(xs), color="blue", lw=3, label="Naive means error")
     plt.plot(xs, density_rsk(xs), color="red", lw=3, label="RSK means error")
     plt.legend()
-    plt.title("Error Analysis with %d trials" % N)
+    plt.title("Error density with %d trials" % N)
     plt.xlabel("l2 error size")
     plt.ylabel("value")
+    plt.text(1.5, 0.6, text, bbox={'facecolor':'white', 'pad':10}, fontsize=12)
+    plt.savefig(os.path.join(os.path.dirname(__file__), "error_density.png"))
     plt.show()
+
 
 if __name__ == "__main__":
     example()
-    simulated_error(1000)
+    simulated_error(100)
