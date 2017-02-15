@@ -1,5 +1,7 @@
 from unittest import TestCase
+import pandas as pd
 from rsk.panel import *
+import random
 
 
 class TestPanels(TestCase):
@@ -99,7 +101,37 @@ class TestPanels(TestCase):
         assert sp.allclose(covs[0], sp.matrix([[11.5,-12.9], [-12.9, 185.7667]]))
         assert sp.allclose(panel_series.mean(), sp.matrix([2.4166666667, 2.6666666667]))
 
+    def test_pandas_interface(self):
 
+        data = [
+            ["0", "Eastern Territory of Endor", 2, 1],
+            ["0", "Eastern Territory of Endor", 0, 23],
+            ["0", "Eastern Territory of Endor", 5, -19],
+            ["0", "Western Territory of Endor", 1, 1],
+            ["0", "Western Territory of Endor", -1, 2],
+            ["0", "Western Territory of Endor", 8,9],
+            ["1", "Eastern Territory of Endor", 1,0],
+            ["1", "Eastern Territory of Endor", 0, 22],
+            ["1", "Eastern Territory of Endor", 4, -17],
+            ["1", "Western Territory of Endor", 2,0],
+            ["1", "Western Territory of Endor", 0,0],
+            ["1", "Western Territory of Endor", 7,10]
+        ]
 
+        # shuffle data to be sure that we properly handle data order in our algorithms
+        random.shuffle(data)
+        df = pd.DataFrame.from_records(data, columns=["time", "region", "ewoks", "rebels"])
+        with self.assertRaises(ValueError):
+            PanelSeries.from_df("not_a_df", "time", "region", "ewoks", "rebels")
+        with self.assertRaises(ValueError):
+            PanelSeries.from_df(df, "time", "region")
 
+        # check valid inputs
+        panel_series = PanelSeries.from_df(df, "time", "region", "ewoks", "rebels")
+
+        covs = panel_series.cov()
+        means = panel_series.means()
+        assert sp.allclose(means[0], sp.matrix([[ 2.33333333, 1.66666667], [2.66666667,  4.0 ]]))
+        assert sp.allclose(means[1], sp.matrix([[ 1.6666666667, 1.6666666667], [3, 3.3333333333]]))
+        assert sp.allclose(covs[0], sp.matrix([[11.5,-12.9], [-12.9, 185.7667]]))
 

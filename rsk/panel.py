@@ -100,6 +100,24 @@ class PanelSeries:
         return PanelSeries.from_list(rowlist, colnames)
 
     @staticmethod
+    def from_df(df, time_var_name, group_var_name, *data_vars):
+        '''
+        helper method to construct a panel series from a Pandas data frame
+        :param df: DataFrame: A Pandas dataframe object
+        :param time_var_name: str: column name of the time variable
+        :param group_var_name: str: column name of the group identifier
+        :param data_vars: *str: the numeric variables over which we will do computations
+        :return: PanelSeries: a PanelSeries object
+        '''
+        if "DataFrame" not in str(type(df)):
+            raise ValueError("First argument must be a Pandas data frame")
+        if len(data_vars)==0:
+            raise ValueError("Need to pass the name of at least one numeric variable for computation")
+        df_vars = [time_var_name, group_var_name] + list(data_vars)
+        rowlist= df[df_vars].values.tolist()
+        return PanelSeries.from_list(rowlist)
+
+    @staticmethod
     def from_list(rowlist, variable_names = None):
         '''
         Construct a panel series from a list of rows (in an arbitrary order).  Each
