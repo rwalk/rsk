@@ -101,7 +101,7 @@ class RSK:
             if sigma is None:
                 # no sigma provided, we use the covariance in the time slice
                 _sigma = y_cov[i-1]
-            elif len(sigma.shape)==3:
+            elif len(sigma.shape) == 3:
                 # sigma is varying in time, pin it to the current time slice
                 _sigma = sigma[i-1]
             else:

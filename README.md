@@ -26,15 +26,56 @@ To run these tests, from the root of the project execute:
 python -m unittest
 ```
 
-## Working with panel data
-Because panel data can be quite tricky to manage, we've implemented the `PanelSeries` interface to streamline computation
-with the RSK filter.  The simplest way to use `PanelSeries` is to load data directly from CSV file on disk:
+## Working with cross sectional time series data
+Because panel data/cross sectional time series data can be quite tricky to manage, we've implemented the `PanelSeries` interface to streamline computation
+with the RSK filter.  There are several ways to use `PanelSeries`.  
 
+### From a pandas DataFrame
+To use a [Pandas DataFrames](http://pandas.pydata.org/pandas-docs/stable/) with the RSK model, we need to convert it to a `PanelSeries`.  For this, `PanelSeries` offers a simple `from_df` method:
 ```python
+import pandas as pd
+import scipy as sp
+import random
+from rsk import RSK
 from rsk.panel import PanelSeries
-time_index, group_index = 0,1
-panel_series = PanelSeries.from_csv("jedi.csv", time_index, group_index, header=True)
+
+#  Imagine we survey residents of Endor and ask them to estimate the number of Ewoks and the number of Rebels present
+#  in their region.
+data = [
+    ["0", "Eastern Territory of Endor", 2, 1],
+    ["0", "Eastern Territory of Endor", 0, 23],
+    ["0", "Eastern Territory of Endor", 5, -19],
+    ["0", "Western Territory of Endor", 1, 1],
+    ["0", "Western Territory of Endor", -1, 2],
+    ["0", "Western Territory of Endor", 8,9],
+    ["1", "Eastern Territory of Endor", 1,0],
+    ["1", "Eastern Territory of Endor", 0, 22],
+    ["1", "Eastern Territory of Endor", 4, -17],
+    ["1", "Western Territory of Endor", 2,0],
+    ["1", "Western Territory of Endor", 0,0],
+    ["1", "Western Territory of Endor", 7,10]
+]
+
+# order of the rows in the data frame doesn't matter...
+random.shuffle(data)
+df = pd.DataFrame.from_records(data, columns=["time", "region", "ewoks", "rebels"])
+
+# specify the time and group variable names, as well as the names of the numeric columns to which we want to apply the RSK filter
+panel_series = PanelSeries.from_df(data, "time", "region", "ewoks", "rebels")
+
+# apply RSK filtering
+# this example has 2 variables "rebels" and "ewoks" and two groups "Western" and "Eastern". So we are computing four filtered means
+# If we apply a random walk, then n_alpha=4 so that each each mean can evolve according to a_i[t+1] = a_i[t] + e
+translation_matrix = sp.eye(4)
+transition_matrix = sp.eye(4)
+a0 = 0.0001*sp.ones((4,1))
+Q0 = 0.001*sp.eye(4)
+rsk = RSK(transition_matrix, translation_matrix)
+fitted_means = rsk.fit_em(panel_series, a0, Q0)
+print(fitted_means)
 ```
+
+### From a CSV 
 The time and group indices specify the index of the column in the csv for the time and group identifier
 variables. In this case `jedi.csv` should look like this:
 ```
@@ -51,6 +92,12 @@ time,region,ewoks,rebels
 1,Western Territory of Endor,2,0
 1,Western Territory of Endor,0,0
 1,Western Territory of Endor,7,10
+```
+To create a `PanelSeries` from this file:
+```python
+from rsk.panel import PanelSeries
+time_index, group_index = 0,1
+panel_series = PanelSeries.from_csv("jedi.csv", time_index, group_index, header=True)
 ```
 All variables except for the group and time identifiers must be numeric.  
 
