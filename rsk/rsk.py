@@ -59,9 +59,12 @@ class RSK:
         else:
             alpha_pred = alpha_filter
         fitted_means = []
+
         for i in range(n_periods):
             n_groups = panel_series.group_counts_mask[i].shape[0]
-            fitted_means.append(self.translation_matrix.dot(alpha_pred[i]).reshape(n_groups, n_vars))
+
+            # note that the fitted values in alpha begin at index 1
+            fitted_means.append(self.translation_matrix.dot(alpha_pred[i+1]).reshape(n_groups, n_vars))
         return fitted_means
 
     def _fit(self, panel_series, a0, Q0, Q, smooth=True, sigma=None):
@@ -84,6 +87,8 @@ class RSK:
         # alpha hidden layer setup
         a0 = a0.reshape(-1,1)
         n_alpha = len(a0)
+
+        # note the first entry in alpha is fixed to a0...but the 'real' data begins at index 1 in alpha
         alpha = sp.zeros((n_periods+1,  n_alpha, 1))
         alpha_filter = sp.zeros((n_periods+1, n_alpha, 1))
         alpha_filter[0] = a0
