@@ -13,6 +13,7 @@ TEST_REQUIRES = [
 setup(
     name='rsk',
     version=0.1,
+    packages=['rsk'],
     url='https://www.github.com/rwalk/rsk',
     author='Ryan Walker',
     author_email='ryan@ryanwalker.us',
