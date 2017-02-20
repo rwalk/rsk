@@ -31,8 +31,7 @@ class RSK:
         V_smooth = sp.zeros(V.shape, np.float64)
         V_smooth[-1] = V_filter[-1]
         B = sp.zeros(V.shape, np.float64)
-
-        for i in range(n_periods-1,0,-1):
+        for i in range(n_periods-1, 0, -1):
             B[i] = V_filter[i-1].dot(t(self.transition_matrix)).dot(inv(V[i]))
             alpha_smooth[i-1] = alpha_filter[i-1] + B[i].dot(alpha_smooth[i] - alpha[i])
             V_smooth[i-1] = V_filter[i-1] + B[i].dot(V_smooth[i]-V[i]).dot(t(B[i]))
@@ -59,8 +58,8 @@ class RSK:
         else:
             alpha_pred = alpha_filter
         fitted_means = []
-        for i in range(n_periods):
-            n_groups = panel_series.group_counts_mask[i].shape[0]
+        for i in range(1, n_periods+1):
+            n_groups = panel_series.group_counts_mask[i-1].shape[0]
             fitted_means.append(self.translation_matrix.dot(alpha_pred[i]).reshape(n_groups, n_vars))
         return fitted_means
 
@@ -122,7 +121,7 @@ class RSK:
 
         return alpha, alpha_filter, alpha_smooth, V, V_filter, V_smooth, smoothing_matrix
 
-    def fit_em(self, panel_series, a0, Q0, sigma0=None, constant_sigma=False, fit_a0=False, tolerance=1e-4, max_iters=100):
+    def fit_em(self, panel_series, a0, Q0, sigma0=None, constant_sigma=False, tolerance=1e-4, max_iters=100):
         '''
         Fit the RSK model to survey data
         :param panel_series: A PanelSeries object containing the survey data
@@ -179,8 +178,7 @@ class RSK:
 
             # update a0, Q0
             Q0 = V[0]
-            if fit_a0:
-                a0 = alpha[0]
+            a0 = alpha[0]
 
             # compute the error and prepare for next step
             if alpha_stale is None:
