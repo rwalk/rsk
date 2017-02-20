@@ -35,7 +35,6 @@ class RSK:
             B[i] = V_filter[i-1].dot(t(self.transition_matrix)).dot(inv(V[i]))
             alpha_smooth[i-1] = alpha_filter[i-1] + B[i].dot(alpha_smooth[i] - alpha[i])
             V_smooth[i-1] = V_filter[i-1] + B[i].dot(V_smooth[i]-V[i]).dot(t(B[i]))
-
         return alpha_smooth, V_smooth, B
 
     def fit(self, panel_series, a0, Q0, Q, smooth=True, sigma=None):
@@ -60,6 +59,9 @@ class RSK:
         fitted_means = []
         for i in range(1, n_periods+1):
             n_groups = panel_series.group_counts_mask[i-1].shape[0]
+
+            # note the first entry in alpha is fixed to a0 and the fitted data begins at index 1 in alpha, so that
+            # mu[0] is determined by alpha[1]
             fitted_means.append(self.translation_matrix.dot(alpha_pred[i]).reshape(n_groups, n_vars))
         return fitted_means
 
@@ -130,7 +132,6 @@ class RSK:
         :param Q: array(n_alpha, n_alpha) Q
         :param sigma0: initial covariance structure. If none, the covariance of the panel_series is used
         :param constant_sigma: boolean: if true, average sigma across time slices at end of each iteration
-        :param fit_a0: boolean: if true, alpha0 is estimated during each iteration. (not recommended)
         :param tolerance: float
         :param max_iters: int
         :return: array(n_periods, n_vars) RSK estimated means
