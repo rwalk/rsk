@@ -116,11 +116,15 @@ class PanelSeries:
             raise ValueError("Need to pass the name of at least one numeric variable for computation")
         df_vars = [time_var_name, group_var_name] + list(data_vars)
 
+        # filter down to relevant columns
+        df = df[df_vars]
+
+        # drop any observations containing nulls
         if df.isnull().values.any():
             warnings.warn("Found NULLS in df. Rows with NULLS will be dropped!")
             df = df.dropna()
 
-        rowlist= df[df_vars].values.tolist()
+        rowlist= df.values.tolist()
 
         if len(rowlist) == 0:
             raise ValueError("No observations in frame. Check df argument and column names.")
