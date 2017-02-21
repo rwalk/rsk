@@ -123,7 +123,7 @@ class RSK:
 
         return alpha, alpha_filter, alpha_smooth, V, V_filter, V_smooth, smoothing_matrix
 
-    def fit_em(self, panel_series, a0, Q0, sigma0=None, constant_sigma=False, tolerance=1e-4, max_iters=100):
+    def fit_em(self, panel_series, a0, Q0, sigma0=None, constant_sigma=False, tolerance=1e-4, max_iters=100, verbose=False):
         '''
         Fit the RSK model to survey data
         :param panel_series: A PanelSeries object containing the survey data
@@ -134,6 +134,7 @@ class RSK:
         :param constant_sigma: boolean: if true, average sigma across time slices at end of each iteration
         :param tolerance: float
         :param max_iters: int
+        :param verbose: boolean: if true, each iteration will report convergence information
         :return: array(n_periods, n_vars) RSK estimated means
         '''
 
@@ -186,7 +187,8 @@ class RSK:
                 error = tolerance + 1000
             else:
                 error = np.linalg.norm(alpha.reshape((-1,)) - alpha_stale.reshape((-1,)))
-                print("Iteration %d, error: %.8f" % (iters,error))
+                if verbose:
+                    print("Iteration %d, error: %.8f" % (iters,error))
             alpha_stale = alpha
             iters += 1
 
